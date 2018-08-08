@@ -1,0 +1,202 @@
+@import url(https://fonts.googleapis.com/css?family=Lato:700);
+* {
+    -webkit-box-sizing: border-box;
+            box-sizing: border-box;
+  }
+  html, body {
+    font-family: "Lato", sans-serif;
+    text-align: center;
+    height: 100%;
+    background-color: #fafafa;
+  }
+
+  /******* tile container begin *******/
+  .square-container {
+    padding: 3px;
+    max-width: 400px;
+    margin: 0 auto;
+    font-family: Helvetica, Arial, sans-serif
+  }
+  .square-container:after {
+    content: "";
+    clear: both;
+    display: block;
+  }
+
+  .square {
+    width: calc(100% / 5);
+    float: left;
+    position: relative;
+    padding-bottom: calc(100% / 5);
+    vertical-align:bottom;
+    display:table-cell;
+  }
+  .square .toggle {
+    width: calc(100% - 6px);
+    height: calc(100% - 6px);
+    margin: 3px;
+    /* padding: 3px; */
+    position: absolute;
+    border-radius: 4px;
+    display: inline-block;
+  }
+
+  /******* tile container ends *******/
+
+  /******* toggle button begin *******/
+
+  .toggle .button {
+    -webkit-filter: blur(1px);
+    -moz-filter: blur(1px);
+    filter: blur(1px);
+    transition: all 300ms ease;
+    border-radius: 1px;
+    position: absolute;
+    display: block;
+    height: 100%;
+    width: 100%;
+  }
+  .toggle .label {
+    transition: color 300ms ease-out;
+    line-height: auto;
+    text-align: center;
+    position: absolute;
+    font-weight: 600;
+    font-size: 50px;
+    display: block;
+    opacity: 0.9;
+    height: 100%;
+    width: 100%;
+    color: rgba(0, 0, 0, 0.7);
+  }
+  .toggle input {
+    opacity: 0;
+    position: absolute;
+    cursor: pointer;
+    z-index: 1;
+    height: 100%;
+    width: 100%;
+  }
+  .toggle input:active ~ .button {
+    box-shadow: 0 15px 25px -4px rgba(0, 0, 0, 0.4), inset 0 -8px 30px 1px rgba(255, 255, 255, 0.9), 0 -10px 15px -1px rgba(255, 255, 255, 0.6), inset 0 8px 25px 0 rgba(0, 0, 0, 0.4), inset 0 0 10px 1px rgba(255, 255, 255, 0.6);
+  }
+  .toggle input:active ~ .label {
+    font-size: 40px;
+    color: rgba(0, 0, 0, 0.45);
+  }
+  .toggle input:checked ~ .button {
+    box-shadow: 0 5px 5px -4px rgba(100, 100, 100, 0.9), inset 0 -10px 25px -1px rgba(200, 200, 200, 0.9), 0 -2px 15px -1px rgba(100, 150, 255, 0.1), inset 0 8px 20px 0 rgba(100, 150, 200, 0.6), inset 0 0 5px 1px rgba(100, 150, 200, 0.6);
+  }
+  .toggle input:checked ~ .label {
+    font-size: 40px;
+    color: rgba(0, 0, 0, 0.4);
+  }
+
+  /******* toggle button ends *******/
+
+  /* select starting stylings ------------------------------*/
+.select {
+  font-family: 'Lato','Helvetica','Arial',sans-serif;
+	position: relative;
+  width: 350px;
+  display: inline-block;
+}
+
+.select-text {
+	position: relative;
+	font-family: inherit;
+	background-color: transparent;
+	width: 350px;
+	padding: 10px 10px 10px 0;
+	font-size: 18px;
+	border-radius: 0;
+	border: none;
+	border-bottom: 1px solid rgba(0,0,0, 0.12);
+}
+
+/* Remove focus */
+.select-text:focus {
+	outline: none;
+	border-bottom: 1px solid rgba(0,0,0, 0);
+}
+
+	/* Use custom arrow */
+.select .select-text {
+	appearance: none;
+	-webkit-appearance:none
+}
+
+.select:after {
+	position: absolute;
+	top: 18px;
+	right: 10px;
+	/* Styling the down arrow */
+	width: 0;
+	height: 0;
+	padding: 0;
+	content: '';
+	border-left: 6px solid transparent;
+	border-right: 6px solid transparent;
+	border-top: 6px solid rgba(0, 0, 0, 0.12);
+	pointer-events: none;
+}
+
+/* active state */
+.select-text:focus ~ .select-label, .select-text:valid ~ .select-label {
+	color: #2F80ED;
+	top: -20px;
+	transition: 0.2s ease all;
+	font-size: 14px;
+}
+
+/* BOTTOM BARS ================================= */
+.select-bar {
+	position: relative;
+	display: block;
+	width: 350px;
+}
+
+.select-bar:before, .select-bar:after {
+	content: '';
+	height: 2px;
+	width: 0;
+	bottom: 1px;
+	position: absolute;
+	background: #2F80ED;
+	transition: 0.2s ease all;
+}
+
+.select-bar:before {
+	left: 50%;
+}
+
+.select-bar:after {
+	right: 50%;
+}
+
+/* active state */
+.select-text:focus ~ .select-bar:before, .select-text:focus ~ .select-bar:after {
+	width: 50%;
+}
+
+  /* select end stylings ------------------------------*/
+
+
+
+
+  /******* highlight toggle checkbox begin *******/
+  .owner-1 {
+      background-color: #aaddfe;
+  }
+  .owner-0 {
+      background-color: #fecaca;
+  }
+  .owner-1.surrounded-true {
+    background-color: #57bcff;
+  }
+  .owner-0.surrounded-true {
+      background-color: #ff7e7e;
+  }
+
+
+  /******* highlight toggle checkbox ends *******/

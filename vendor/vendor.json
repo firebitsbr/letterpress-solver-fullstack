@@ -1,0 +1,137 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"path": "appengine/cloudsql",
+			"revision": ""
+		},
+		{
+			"checksumSHA1": "6CPHayaLlU9rFvGhx/No9clveuU=",
+			"path": "github.com/PuerkitoBio/goquery",
+			"revision": "61aa1975b1f7856927c526b0e0cd8c8b3a3030d0",
+			"revisionTime": "2018-03-13T22:36:54Z"
+		},
+		{
+			"checksumSHA1": "WHAdzAZYBA6GCyPTIXr46P77uis=",
+			"path": "github.com/andybalholm/cascadia",
+			"revision": "901648c87902174f774fac311d7f176f8647bdaa",
+			"revisionTime": "2018-02-20T18:43:36Z"
+		},
+		{
+			"checksumSHA1": "7oRVoP21hh6tTkZ0xPEjaRpONi8=",
+			"path": "github.com/axgle/mahonia",
+			"revision": "3358181d7394e26beccfae0ffde05193ef3be33a",
+			"revisionTime": "2018-02-08T00:28:26Z"
+		},
+		{
+			"checksumSHA1": "QpGNbTTMybnPm1ou0Vs1DdJe9j8=",
+			"path": "github.com/coreos/goproxy",
+			"revision": "25fe2597a3d151ba954d9b3c0fd4663e79de48cc",
+			"revisionTime": "2017-02-22T23:35:30Z"
+		},
+		{
+			"checksumSHA1": "zFv0xWYC94gU6aClN7LlZF5EaAs=",
+			"path": "github.com/go-sql-driver/mysql",
+			"revision": "1a676ac6e4dce68e9303a1800773861350374a9e",
+			"revisionTime": "2018-03-08T10:03:10Z"
+		},
+		{
+			"checksumSHA1": "IkPM2QLv9urri7S49wzroQx9oXA=",
+			"path": "github.com/gorilla/context",
+			"revision": "08b5f424b9271eedf6f9f0ce86cb9396ed337a42",
+			"revisionTime": "2016-08-17T18:46:32Z"
+		},
+		{
+			"checksumSHA1": "CVss9W01Rrm2VlhhjW0z5D35Xo8=",
+			"path": "github.com/gorilla/mux",
+			"revision": "4dbd923b0c9e99ff63ad54b0e9705ff92d3cdb06",
+			"revisionTime": "2018-03-14T16:31:26Z"
+		},
+		{
+			"checksumSHA1": "veKBU5FJfGTojLA0p08KGCFowno=",
+			"path": "github.com/mattn/go-runewidth",
+			"revision": "ce7b0b5c7b45a81508558cd1dba6bb1e4ddb51bb",
+			"revisionTime": "2018-04-08T05:53:51Z"
+		},
+		{
+			"checksumSHA1": "qy1o/2NzswTMAoPXgdUxg4/g9tI=",
+			"path": "github.com/moul/http2curl",
+			"revision": "9ac6cf4d929b2fa8fd2d2e6dec5bb0feb4f4911d",
+			"revisionTime": "2017-09-19T18:10:01Z"
+		},
+		{
+			"checksumSHA1": "DWQtVvG3pOgfUrstp4xRaXF4JAk=",
+			"path": "github.com/ngaut/log",
+			"revision": "b8e36e7ba5ac61ce5644e570f1cc42d97dbaf8ed",
+			"revisionTime": "2018-03-14T03:18:56Z"
+		},
+		{
+			"checksumSHA1": "zFMJBsjbTPILk4Fk9n+xqIqtxI8=",
+			"path": "github.com/nsf/termbox-go",
+			"revision": "3e24a7b6661e09b87a9f49d693034219f81602fa",
+			"revisionTime": "2018-04-07T22:45:25Z"
+		},
+		{
+			"checksumSHA1": "sYl8BgUgUE1qv4/DVLu7VT/kuqA=",
+			"path": "github.com/parnurzeal/gorequest",
+			"revision": "a578a48e8d6ca8b01a3b18314c43c6716bb5f5a3",
+			"revisionTime": "2017-02-20T17:20:57Z"
+		},
+		{
+			"checksumSHA1": "iZ95CfbNL41MjspCvZKmpNq4m6U=",
+			"path": "github.com/patrickmn/go-cache",
+			"revision": "a3647f8e31d79543b2d0f0ae2fe5c379d72cedc0",
+			"revisionTime": "2017-07-22T04:01:10Z"
+		},
+		{
+			"checksumSHA1": "d6BycwPpKXW09I/tXMqcItE8SA4=",
+			"path": "github.com/pkg/errors",
+			"revision": "816c9085562cd7ee03e7f8188a1cfd942858cded",
+			"revisionTime": "2018-03-11T21:45:15Z"
+		},
+		{
+			"checksumSHA1": "/hQCdwKdF4xPdjSQvYDV+cjYyYY=",
+			"path": "github.com/rs/cors",
+			"revision": "ff4d2805c9f577707553c1e36fbdc0c9d346d5f2",
+			"revisionTime": "2018-03-15T21:10:51Z"
+		},
+		{
+			"checksumSHA1": "Hv9z6TVaG7s7EJAyuJ8N3pt0fOI=",
+			"path": "github.com/yanyiwu/gojieba",
+			"revision": "78c7e2ab4e2aaf35fcb394d26e5bca4805fc057d",
+			"revisionTime": "2017-07-15T13:47:19Z"
+		},
+		{
+			"checksumSHA1": "L68uqaYKEOxkq2xwnNV2bRP7yO4=",
+			"path": "golang.org/x/net/html",
+			"revision": "6078986fec03a1dcc236c34816c71b0e05018fda",
+			"revisionTime": "2017-09-09T04:35:08Z"
+		},
+		{
+			"checksumSHA1": "NvlH++AI8+25Z2Vs8WKxLVCNrxo=",
+			"path": "golang.org/x/net/html/atom",
+			"revision": "6078986fec03a1dcc236c34816c71b0e05018fda",
+			"revisionTime": "2017-09-09T04:35:08Z"
+		},
+		{
+			"checksumSHA1": "Q165MxF3KQE3AaU3GGPsKFLEFCU=",
+			"path": "golang.org/x/net/publicsuffix",
+			"revision": "a35a21de978d84ffc92f010a153705b170b2f9d1",
+			"revisionTime": "2018-04-02T10:28:55Z"
+		},
+		{
+			"checksumSHA1": "W/pYxFe8/FHT10/wulwesJsOoUw=",
+			"path": "google.golang.org/appengine/cloudsql",
+			"revision": "5bee14b453b4c71be47ec1781b0fa61c2ea182db",
+			"revisionTime": "2017-12-12T22:30:47Z"
+		},
+		{
+			"checksumSHA1": "OhdeqpOxuTXXtmurOKD49U+vdhA=",
+			"path": "gopkg.in/yaml.v1",
+			"revision": "9f9df34309c04878acc86042b16630b0f696e1de",
+			"revisionTime": "2014-09-24T16:16:07Z"
+		}
+	],
+	"rootPath": "github.com/xdqc/letterpress-solver"
+}
