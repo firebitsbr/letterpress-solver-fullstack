@@ -255,7 +255,7 @@ var MatchComponent = /** @class */ (function () {
     };
     MatchComponent.prototype.fetchGames = function () {
         var _this = this;
-        this.http.get('http://' + __WEBPACK_IMPORTED_MODULE_1__environments_environment__["a" /* env */].host + ':' + __WEBPACK_IMPORTED_MODULE_1__environments_environment__["a" /* env */].port + '/match')
+        this.http.get('http://' + window.location.host + '/match')
             .map(function (resp) { return resp.text() !== '' ? resp.json() : ''; })
             .subscribe(function (data) {
             if (data) {
@@ -340,7 +340,7 @@ var MatchComponent = /** @class */ (function () {
         }
         console.log(letters);
         console.log(selected.join(''));
-        this.http.get('http://' + __WEBPACK_IMPORTED_MODULE_1__environments_environment__["a" /* env */].host + ':' + __WEBPACK_IMPORTED_MODULE_1__environments_environment__["a" /* env */].port + '/words?selected=' + selected.join('') + '&letters=' + letters)
+        this.http.get('http://' + window.location.host + '/words?selected=' + selected.join('') + '&letters=' + letters)
             .map(function (resp) { return resp.json(); })
             .subscribe(function (data) {
             _this.foundWords[i] = data;
@@ -360,7 +360,7 @@ var MatchComponent = /** @class */ (function () {
         this.selectedTile[i].fill(false);
     };
     MatchComponent.prototype.deleteWord = function (i) {
-        this.http.delete('http://' + __WEBPACK_IMPORTED_MODULE_1__environments_environment__["a" /* env */].host + ':' + __WEBPACK_IMPORTED_MODULE_1__environments_environment__["a" /* env */].port + '/word?delete=' + this.choosingWord[i])
+        this.http.delete('http://' + window.location.host + '/word?delete=' + this.choosingWord[i])
             .subscribe();
         console.log(this.choosingWord, 'deleted');
     };
