@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -78,44 +79,9 @@ func init() {
 }
 
 func selectWordsDb(minLetters string, maxLetters string) []string {
-	loBound := make(map[rune]int)
-	hiBound := make(map[rune]int)
-	for _, c := range minLetters {
-		_, ok := loBound[c]
-		if ok {
-			loBound[c]++
-		} else {
-			loBound[c] = 1
-		}
-	}
-	for _, c := range maxLetters {
-		_, ok := hiBound[c]
-		if ok {
-			hiBound[c]++
-		} else {
-			hiBound[c] = 1
-		}
-	}
+	sqlclause, args := prepareSelectWordsClause(minLetters, maxLetters)
 
-	var args []interface{}
-	var sqlclause string
-	for _, v := range "ABCDEFGHIJKLMNOPQRSTUVWXYZ" {
-		l, ok := loBound[v]
-		if ok {
-			args = append(args, l)
-		} else {
-			args = append(args, 0)
-		}
-		h, ok := hiBound[v]
-		if ok {
-			args = append(args, h)
-		} else {
-			args = append(args, 0)
-		}
-		sqlclause = sqlclause + "AND " + string(v) + " >= (?) AND " + string(v) + " <= (?) "
-	}
-
-	sql := `SELECT word FROM db_english_all_words WHERE valid = 1 ` + sqlclause + `ORDER BY length ASC`
+	sql := `SELECT word FROM db_english_all_words WHERE valid = 1 ` + sqlclause + `ORDER BY length ASC LIMIT 999`
 
 	//unpack array as args
 	result, err := db.Query(sql, args...)
@@ -135,9 +101,61 @@ func selectWordsDb(minLetters string, maxLetters string) []string {
 	return res
 }
 
+func selectWordsCountDb(minLetters string, maxLetters string) (res int) {
+	sqlclause, args := prepareSelectWordsClause(minLetters, maxLetters)
+
+	sql := `SELECT COUNT(*) FROM db_english_all_words WHERE valid = 1 ` + sqlclause
+
+	//unpack array as args
+	err := db.QueryRow(sql, args...).Scan(&res)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	return
+}
+
+func prepareSelectWordsClause(minLetters string, maxLetters string) (sqlclause string, args []interface{}) {
+	loBound := make(map[rune]int)
+	hiBound := make(map[rune]int)
+	for _, c := range minLetters {
+		_, ok := loBound[c]
+		if ok {
+			loBound[c]++
+		} else {
+			loBound[c] = 1
+		}
+	}
+	for _, c := range maxLetters {
+		_, ok := hiBound[c]
+		if ok {
+			hiBound[c]++
+		} else {
+			hiBound[c] = 1
+		}
+	}
+
+	for _, v := range "ABCDEFGHIJKLMNOPQRSTUVWXYZ" {
+		l, ok := loBound[v]
+		if ok {
+			args = append(args, l)
+		} else {
+			args = append(args, 0)
+		}
+		h, ok := hiBound[v]
+		if ok {
+			args = append(args, h)
+		} else {
+			args = append(args, 0)
+		}
+		sqlclause = sqlclause + "AND " + string(v) + " >= (?) AND " + string(v) + " <= (?) "
+	}
+	return
+}
+
 func deleteWordDb(word string) {
 	sql := `UPDATE db_english_all_words SET valid = 0 WHERE word = (?) `
-	_, err := db.Exec(sql, word)
+	_, err := db.Exec(sql, strings.ToLower(word))
 	if err != nil {
 		panic(err.Error())
 	} else {

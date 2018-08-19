@@ -4,9 +4,6 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"os/exec"
-	"strconv"
-	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
@@ -30,6 +27,7 @@ func RunWeb(port string) {
 		w.Write(matchInfo)
 	}).Methods("GET")
 	r.HandleFunc("/words", findWords).Methods("GET")
+	r.HandleFunc("/word", clickWord).Methods("POST")
 	r.HandleFunc("/word", deleteWord).Methods("DELETE")
 
 	r.PathPrefix("/solver/").Handler(http.StripPrefix("/solver/", http.FileServer(http.Dir("./lpsolver/dist"))))
@@ -56,130 +54,79 @@ func findWords(w http.ResponseWriter, r *http.Request) {
 
 func deleteWord(w http.ResponseWriter, r *http.Request) {
 	word, _ := r.URL.Query()["delete"]
-	log.Println(word[0])
+	log.Println("deleting:", word[0])
 	deleteWordDb(word[0])
 }
 
-func setMatch(jsonBytes []byte) {
-	matchInfo = jsonBytes
-}
+func clickWord(w http.ResponseWriter, r *http.Request) {
+	word, _ := r.URL.Query()["click"]
 
-func checkVowalsMatch(jsonBytes []byte) {
-	match := &MatchInfoSingle{}
-	json.Unmarshal(jsonBytes, match)
-	tiles := match.Match.ServerData.Tiles
-	letters := ""
-	for _, tile := range tiles {
-		letters += tile.T
+	var clickList []int
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&clickList)
+	if err != nil {
+		panic(err)
 	}
-
-	vowals := ","
-	for _, v := range []rune("AEIOU") {
-		if strings.ContainsRune(letters, v) {
-			vowals += string(v) + ","
-		}
-	}
-
-	res := selectWordsDb("", letters)
-	exec.Command("say", strconv.Itoa(len(res)), vowals).Run()
+	log.Printf("clicking: %s %v\n", word[0], clickList)
+	clickTiles(clickList)
 }
 
 //MatchInfo ...
 type MatchInfo struct {
-	Success bool `json:"success"`
-	Matches []struct {
-		MatchID            string `json:"matchId"`
-		MatchIDNumber      int    `json:"matchIdNumber"`
-		MatchURL           string `json:"matchURL"`
-		CreateDate         string `json:"createDate"`
-		UpdateDate         string `json:"updateDate"`
-		MatchStatus        int    `json:"matchStatus"`
-		CurrentPlayerIndex int    `json:"currentPlayerIndex"`
-		Letters            string `json:"letters"`
-		RowCount           int    `json:"rowCount"`
-		ColumnCount        int    `json:"columnCount"`
-		TurnCount          int    `json:"turnCount"`
-		MatchData          string `json:"matchData"`
-		ServerData         struct {
-			Language  int   `json:"language"`
-			UsedTiles []int `json:"usedTiles"`
-			Tiles     []struct {
-				T string `json:"t"`
-				O int    `json:"o"`
-			} `json:"tiles"`
-			UsedWords  []string `json:"usedWords"`
-			MinVersion int      `json:"minVersion"`
-		} `json:"serverData"`
-		Participants []struct {
-			UserID                string      `json:"userId"`
-			UserName              string      `json:"userName"`
-			PlayerIndex           int         `json:"playerIndex"`
-			PlayerStatus          string      `json:"playerStatus"`
-			LastTurnStatus        string      `json:"lastTurnStatus"`
-			MatchOutcome          string      `json:"matchOutcome"`
-			TurnDate              string      `json:"turnDate"`
-			TimeoutDate           interface{} `json:"timeoutDate"`
-			AvatarURL             string      `json:"avatarURL"`
-			IsFavorite            bool        `json:"isFavorite"`
-			UseBadWords           bool        `json:"useBadWords"`
-			BlockChat             bool        `json:"blockChat"`
-			DeletedFromPlayerList bool        `json:"deletedFromPlayerList"`
-			Online                bool        `json:"online"`
-			ChatsUnread           int         `json:"chatsUnread"`
-			MuteChat              bool        `json:"muteChat"`
-			AbandonedMatch        bool        `json:"abandonedMatch"`
-			IsBot                 bool        `json:"isBot"`
-			BannedChat            bool        `json:"bannedChat"`
-		} `json:"participants"`
-	} `json:"matches"`
+	Success bool    `json:"success"`
+	Matches []Match `json:"matches"`
 }
 
 //MatchInfo ...
 type MatchInfoSingle struct {
-	Success bool `json:"success"`
-	Match   struct {
-		MatchID            string `json:"matchId"`
-		MatchIDNumber      int    `json:"matchIdNumber"`
-		MatchURL           string `json:"matchURL"`
-		CreateDate         string `json:"createDate"`
-		UpdateDate         string `json:"updateDate"`
-		MatchStatus        int    `json:"matchStatus"`
-		CurrentPlayerIndex int    `json:"currentPlayerIndex"`
-		Letters            string `json:"letters"`
-		RowCount           int    `json:"rowCount"`
-		ColumnCount        int    `json:"columnCount"`
-		TurnCount          int    `json:"turnCount"`
-		MatchData          string `json:"matchData"`
-		ServerData         struct {
-			Language  int   `json:"language"`
-			UsedTiles []int `json:"usedTiles"`
-			Tiles     []struct {
-				T string `json:"t"`
-				O int    `json:"o"`
-			} `json:"tiles"`
-			UsedWords  []string `json:"usedWords"`
-			MinVersion int      `json:"minVersion"`
-		} `json:"serverData"`
-		Participants []struct {
-			UserID                string      `json:"userId"`
-			UserName              string      `json:"userName"`
-			PlayerIndex           int         `json:"playerIndex"`
-			PlayerStatus          string      `json:"playerStatus"`
-			LastTurnStatus        string      `json:"lastTurnStatus"`
-			MatchOutcome          string      `json:"matchOutcome"`
-			TurnDate              string      `json:"turnDate"`
-			TimeoutDate           interface{} `json:"timeoutDate"`
-			AvatarURL             string      `json:"avatarURL"`
-			IsFavorite            bool        `json:"isFavorite"`
-			UseBadWords           bool        `json:"useBadWords"`
-			BlockChat             bool        `json:"blockChat"`
-			DeletedFromPlayerList bool        `json:"deletedFromPlayerList"`
-			Online                bool        `json:"online"`
-			ChatsUnread           int         `json:"chatsUnread"`
-			MuteChat              bool        `json:"muteChat"`
-			AbandonedMatch        bool        `json:"abandonedMatch"`
-			IsBot                 bool        `json:"isBot"`
-			BannedChat            bool        `json:"bannedChat"`
-		} `json:"participants"`
-	} `json:"match"`
+	Success bool  `json:"success"`
+	Match   Match `json:"match"`
+}
+
+//Match...
+type Match struct {
+	MatchID            string `json:"matchId"`
+	MatchIDNumber      int    `json:"matchIdNumber"`
+	MatchURL           string `json:"matchURL"`
+	CreateDate         string `json:"createDate"`
+	UpdateDate         string `json:"updateDate"`
+	MatchStatus        int    `json:"matchStatus"`
+	CurrentPlayerIndex int    `json:"currentPlayerIndex"`
+	Letters            string `json:"letters"`
+	RowCount           int    `json:"rowCount"`
+	ColumnCount        int    `json:"columnCount"`
+	TurnCount          int    `json:"turnCount"`
+	MatchData          string `json:"matchData"`
+	ServerData         struct {
+		Language  int   `json:"language"`
+		UsedTiles []int `json:"usedTiles"`
+		Tiles     []struct {
+			T string `json:"t"`
+			O int    `json:"o"`
+			S bool
+		} `json:"tiles"`
+		UsedWords  []string `json:"usedWords"`
+		MinVersion int      `json:"minVersion"`
+	} `json:"serverData"`
+	Participants []struct {
+		UserID                string      `json:"userId"`
+		UserName              string      `json:"userName"`
+		PlayerIndex           int         `json:"playerIndex"`
+		PlayerStatus          string      `json:"playerStatus"`
+		LastTurnStatus        string      `json:"lastTurnStatus"`
+		MatchOutcome          string      `json:"matchOutcome"`
+		TurnDate              string      `json:"turnDate"`
+		TimeoutDate           interface{} `json:"timeoutDate"`
+		AvatarURL             string      `json:"avatarURL"`
+		IsFavorite            bool        `json:"isFavorite"`
+		UseBadWords           bool        `json:"useBadWords"`
+		BlockChat             bool        `json:"blockChat"`
+		DeletedFromPlayerList bool        `json:"deletedFromPlayerList"`
+		Online                bool        `json:"online"`
+		ChatsUnread           int         `json:"chatsUnread"`
+		MuteChat              bool        `json:"muteChat"`
+		AbandonedMatch        bool        `json:"abandonedMatch"`
+		IsBot                 bool        `json:"isBot"`
+		BannedChat            bool        `json:"bannedChat"`
+	} `json:"participants"`
 }

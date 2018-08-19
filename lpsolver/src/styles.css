@@ -79,4 +79,12 @@
   .btn-red:hover, .btn-red:focus {
     background-color: #c0392b;
   }
+
+  .btn-purple {
+    background-color: #d199eb;
+  }
+  
+  .btn-purple:hover, .btn-purple:focus {
+    background-color: #ae17e9;
+  }
   /******* material button ends *******/

@@ -1,9 +1,10 @@
 declare namespace MatchInfo {
 
     export interface Tile {
-        t: string;
-        o: number;
-        s: boolean;
+        t: string; // A-Z char
+        o: number; // 1:Self; 0:Opponent; 127:Blank
+        s: boolean; // true: surrounded
+        color: string;
     }
 
     export interface ServerData {

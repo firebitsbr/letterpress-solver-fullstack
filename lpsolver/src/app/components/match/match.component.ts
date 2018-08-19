@@ -31,7 +31,7 @@ export class MatchComponent implements OnInit {
   }
 
   fetchGames() {
-    this.http.get('http://'+window.location.host+'/match')
+    this.http.get('http://' + window.location.host + '/match')
       .map((resp) => resp.text() !== '' ? resp.json() : '')
       .subscribe(
         (data) => {
@@ -39,7 +39,7 @@ export class MatchComponent implements OnInit {
             this.processGameData(data);
             // auto find words for played matches
             for (let i = 0; i < this.matches.length; i++) {
-              if(this.matches[i].matchStatus != 4){   //matchStatus==4: new game
+              if (this.matches[i].matchStatus != 4) {   //matchStatus==4: new game
                 this.findWords(i);
               }
             }
@@ -66,10 +66,12 @@ export class MatchComponent implements OnInit {
 
     this.opponentNames = this.matches.map(m => this.playersId.includes(m.participants[0].userId) ? m.participants[1].userName : m.participants[0].userName);
     console.log(this.opponentNames);
+    console.log(this.matches.map(m => m.matchId));
     this.letterGrids = this.matches.map(m => m['letters']);
     console.log(this.letterGrids);
     this.tileGrids = this.matches.map(m => m['serverData']['tiles'])
       .map(t => t.slice(20, 25).concat(t.slice(15, 20).concat(t.slice(10, 15).concat(t.slice(5, 10).concat(t.slice(0, 5))))));
+    this.tileGrids.forEach(tg => tg.forEach(t => t.t = t.t.toUpperCase()));
 
 
     for (let i = 0; i < this.tileGrids.length; i++) {
@@ -79,16 +81,22 @@ export class MatchComponent implements OnInit {
         tg.forEach(t => t.o == 1 ? t.o = 0 : t.o == 0 ? t.o = 1 : t.o)
       }
 
-      // set surronded tiles
+      // set surronded tiles: if every surrounded tiles have same ownership, set true; otherwise, false
       for (let k = 0; k < 25; k++) {
         tg[k].s = [
-          ([4, 9, 14, 19, 24].includes(k)) ? undefined : tg[k + 1],
-          ([0, 5, 10, 15, 20].includes(k)) ? undefined : tg[k - 1],
-          tg[k + 5],
-          tg[k - 5]
+          ([4, 9, 14, 19, 24].includes(k)) ? undefined : tg[k + 1], // right
+          ([0, 5, 10, 15, 20].includes(k)) ? undefined : tg[k - 1], // left
+          tg[k + 5], // down
+          tg[k - 5]  // up
         ]
           .filter(t => t)
-          .every(t => t.o === tg[k].o);
+          .every(t => t.o === tg[k].o); // tg[k].o: ownership of adjacent tiles of t; t.o: ownership of t
+
+        tg[k].color = tg[k].o === 127 ? 'white'
+          : tg[k].o === 0 && tg[k].s ? 'red'
+            : tg[k].o === 0 && !tg[k].s ? 'pink'
+              : tg[k].o === 1 && tg[k].s ? 'blue'
+                : tg[k].o === 1 && !tg[k].s ? 'azure' : 'error';
       }
     }
 
@@ -120,7 +128,7 @@ export class MatchComponent implements OnInit {
     }
     console.log(letters);
     console.log(selected.join(''));
-    this.http.get('http://'+window.location.host+'/words?selected=' + selected.join('') + '&letters=' + letters)
+    this.http.get('http://' + window.location.host + '/words?selected=' + selected.join('') + '&letters=' + letters)
       .map(resp => resp.json())
       .subscribe(data => {
         this.foundWords[i] = data;
@@ -143,10 +151,50 @@ export class MatchComponent implements OnInit {
     this.selectedTile[i].fill(false)
   }
 
+  autoClickTiles(i: number) {
+    if (this.choosingWord[i] === undefined) return;
+
+    const tg = this.tileGrids[i];
+    const letterMap = {};
+
+    // construct the letterMap, each letter key will have ordered (pink,white...) tiles number as value
+    // 1st, push selected tiles
+    for (let k = 0; k < 25; k++) {
+      if (this.selectedTile[i][k]) {
+        if (!letterMap[tg[k].t]) {
+          letterMap[tg[k].t] = []
+        }
+        letterMap[tg[k].t].push(k)
+      }
+    }
+    // 2nd, push unselected tiles, pink first, then white
+    ["pink", "white", "red", "azure", "blue"].forEach(color => {
+      for (let k = 0; k < 25; k++) {
+        if (tg[k].color === color && !this.selectedTile[i][k]) {
+          if (!letterMap[tg[k].t]) {
+            letterMap[tg[k].t] = []
+          }
+          letterMap[tg[k].t].push(k)
+        }
+      }
+    })
+
+    // decide the order of tiles to be clicked
+    const clickOrderList = []
+    for (let idx = 0; idx < this.choosingWord[i].length; idx++) {
+      const letter = this.choosingWord[i][idx].toUpperCase();
+      clickOrderList.push(letterMap[letter].shift())
+    }
+
+    this.http.post('http://' + window.location.host + '/word?click=' + this.choosingWord[i], clickOrderList)
+      .subscribe()
+    console.log('autoclicking tiles...', this.choosingWord[i]);
+  }
+
   deleteWord(i: number) {
-    this.http.delete('http://'+window.location.host+'/word?delete=' + this.choosingWord[i])
-    .subscribe()
-    console.log(this.choosingWord, 'deleted');
+    this.http.delete('http://' + window.location.host + '/word?delete=' + this.choosingWord[i])
+      .subscribe()
+    console.log('deleting...', this.choosingWord[i]);
   }
 
 }
