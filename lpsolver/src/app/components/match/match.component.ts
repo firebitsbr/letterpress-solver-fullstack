@@ -134,7 +134,7 @@ export class MatchComponent implements OnInit {
         this.foundWords[i] = data;
         const usedWords = this.matches[i].serverData.usedWords
         // filter out usedWords
-        this.foundWords[i] = this.foundWords[i].filter(w => !usedWords.some(uw => uw.indexOf(w) === 0));
+        this.foundWords[i] = this.foundWords[i].filter(w => !usedWords.some(uw => uw.indexOf(w.replace('*','')) === 0));
 
         //TODO: evalue word
         // basic score (-): covers all pink tiles = 0; miss -1
@@ -183,7 +183,9 @@ export class MatchComponent implements OnInit {
     const clickOrderList = []
     for (let idx = 0; idx < this.choosingWord[i].length; idx++) {
       const letter = this.choosingWord[i][idx].toUpperCase();
-      clickOrderList.push(letterMap[letter].shift())
+      if (/^[A-Z]$/.test(letter)) {
+        clickOrderList.push(letterMap[letter].shift())
+      }
     }
 
     this.http.post('http://' + window.location.host + '/word?click=' + this.choosingWord[i], clickOrderList)

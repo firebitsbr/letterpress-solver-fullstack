@@ -39,7 +39,7 @@ func clickTiles(clickList []int) {
 	width := 216
 	left := 108
 	top := 803
-	timeInterval := 200 * time.Millisecond
+	timeInterval := 220 * time.Millisecond
 
 	for i, k := range clickList {
 		x := left + width*(k%5)
@@ -50,14 +50,21 @@ func clickTiles(clickList []int) {
 			if err != nil {
 				log.Println("error: check adb connection.", err)
 			}
-			if i == len(clickList)-1 {
-				time.Sleep(timeInterval * 2)
-				exec.Command("adb", "shell", "input", "tap", "1000", "50").Run() // click SUBMIT
-			}
+			// if i == len(clickList)-1 {
+			// 	time.Sleep(timeInterval * 2)
+			// 	exec.Command("adb", "shell", "input", "tap", "1000", "50").Run() // click SUBMIT
+			// }
 		}(x, y, k, i) //pass loop local vars to goroutine!
 		time.Sleep(timeInterval)
 		if i < 8 {
-			timeInterval += 10 * time.Millisecond
+			timeInterval += 15 * time.Millisecond
 		}
 	}
+}
+
+func markPlayedWord(bs []byte) {
+	match := &MatchInfoSingle{}
+	json.Unmarshal(bs, match)
+	playedWords := match.Match.ServerData.UsedWords
+	tagPlayedWordDb(playedWords[len(playedWords)-1])
 }

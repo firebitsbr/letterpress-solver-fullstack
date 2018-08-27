@@ -12,7 +12,8 @@ import (
 )
 
 var (
-	db *sql.DB
+	db    *sql.DB
+	table = "en_words" //db_english_all_words en_words
 )
 
 type Conf struct {
@@ -81,9 +82,7 @@ func init() {
 func selectWordsDb(minLetters string, maxLetters string) []string {
 	sqlclause, args := prepareSelectWordsClause(minLetters, maxLetters)
 
-	sql := `SELECT word FROM db_english_all_words WHERE valid = 1 ` + sqlclause + `ORDER BY length ASC LIMIT 999`
-
-	//unpack array as args
+	sql := `SELECT word,valid FROM ` + table + ` WHERE valid IN (1,2) ` + sqlclause + `ORDER BY length ASC LIMIT 999`
 	result, err := db.Query(sql, args...)
 	if err != nil {
 		panic(err.Error())
@@ -92,8 +91,13 @@ func selectWordsDb(minLetters string, maxLetters string) []string {
 	res := make([]string, 0, 200)
 	for result.Next() {
 		var word Word
-		err = result.Scan(&word.Word)
-		res = append(res, word.Word)
+		err = result.Scan(&word.Word, &word.Valid)
+		//double the played word when build the search result, so that the frontend can know the played word
+		if word.Valid == 2 {
+			res = append(res, word.Word+"*")
+		} else {
+			res = append(res, word.Word)
+		}
 		if err != nil {
 			panic(err.Error())
 		}
@@ -104,7 +108,7 @@ func selectWordsDb(minLetters string, maxLetters string) []string {
 func selectWordsCountDb(minLetters string, maxLetters string) (res int) {
 	sqlclause, args := prepareSelectWordsClause(minLetters, maxLetters)
 
-	sql := `SELECT COUNT(*) FROM db_english_all_words WHERE valid = 1 ` + sqlclause
+	sql := `SELECT COUNT(*) FROM ` + table + ` WHERE valid IN (1,2) ` + sqlclause
 
 	//unpack array as args
 	err := db.QueryRow(sql, args...).Scan(&res)
@@ -153,12 +157,25 @@ func prepareSelectWordsClause(minLetters string, maxLetters string) (sqlclause s
 	return
 }
 
-func deleteWordDb(word string) {
-	sql := `UPDATE db_english_all_words SET valid = 0 WHERE word = (?) `
+func deleteWordDb(urlRawQuery string) {
+	inValidWord := strings.Split(urlRawQuery, "=")[2]
+	inValidWord = strings.ToLower(strings.Split(inValidWord, "&")[0])
+
+	sql := `UPDATE ` + table + ` SET valid = 0 WHERE word = (?) `
+	_, err := db.Exec(sql, strings.ToLower(inValidWord))
+	if err != nil {
+		panic(err.Error())
+	} else {
+		log.Println("deleted :", inValidWord)
+	}
+}
+
+func tagPlayedWordDb(word string) {
+	sql := `UPDATE ` + table + ` SET valid = 2 WHERE word = (?) `
 	_, err := db.Exec(sql, strings.ToLower(word))
 	if err != nil {
 		panic(err.Error())
 	} else {
-		log.Println("deleted :", word)
+		log.Println("played :", word)
 	}
 }

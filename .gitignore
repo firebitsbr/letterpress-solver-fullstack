@@ -30,5 +30,6 @@ npm-debug.log
 conf.json
 /**/environments/environment.ts
 /images/*
+/corpus
 *.txt
 *.yml

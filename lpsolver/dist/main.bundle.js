@@ -357,7 +357,14 @@ var MatchComponent = /** @class */ (function () {
             _this.foundWords[i] = data;
             var usedWords = _this.matches[i].serverData.usedWords;
             // filter out usedWords
-            _this.foundWords[i] = _this.foundWords[i].filter(function (w) { return !usedWords.some(function (uw) { return uw.indexOf(w) === 0; }); });
+            _this.foundWords[i] = _this.foundWords[i].filter(function (w) { return !usedWords.some(function (uw) { return uw.indexOf(w.replace('*', '')) === 0; }); });
+            // mark played words
+            for (var index = 0; index < _this.foundWords[i].length - 1; index++) {
+                if (_this.foundWords[i][index] === _this.foundWords[i][index + 1]) {
+                    _this.foundWords[i][index] += '*';
+                    _this.foundWords[i][index + 1] += '*';
+                }
+            }
             //TODO: evalue word
             // basic score (-): covers all pink tiles = 0; miss -1
             // aggro score (+): covers white tile; add +1
@@ -401,7 +408,9 @@ var MatchComponent = /** @class */ (function () {
         var clickOrderList = [];
         for (var idx = 0; idx < this.choosingWord[i].length; idx++) {
             var letter = this.choosingWord[i][idx].toUpperCase();
-            clickOrderList.push(letterMap[letter].shift());
+            if (/^[A-Z]$/.test(letter)) {
+                clickOrderList.push(letterMap[letter].shift());
+            }
         }
         this.http.post('http://' + window.location.host + '/word?click=' + this.choosingWord[i], clickOrderList)
             .subscribe();
