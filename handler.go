@@ -46,7 +46,6 @@ func clickTiles(clickList []int) {
 		y := top + width*(k/5)
 		go func(x int, y int, k int, i int) {
 			err := exec.Command("adb", "shell", "input", "tap", strconv.Itoa(x), strconv.Itoa(y)).Run() // tap the tile
-			log.Println("touch", k)
 			if err != nil {
 				log.Println("error: check adb connection.", err)
 			}

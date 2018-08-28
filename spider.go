@@ -81,6 +81,7 @@ func (s *spider) Init() {
 		} else if ctx.Req.URL.Path == "/api/1.0/lp_check_word.json" {
 			bs, _ := ioutil.ReadAll(resp.Body)
 			if strings.Contains(string(bs), "\"found\":false") {
+				println(string(bs))
 				go deleteWordDb(ctx.Req.URL.RawQuery)
 				exec.Command("adb", "shell", "input", "tap", "50", "50").Run() // tap clear
 				go func() {
@@ -95,20 +96,22 @@ func (s *spider) Init() {
 			if strings.Contains(string(bs), "\"matchStatus\":1,") || strings.Contains(string(bs), "\"matchStatus\":3,") { // status==1 ongoing match,  3 new created match
 				go func() {
 					exec.Command("adb", "shell", "input", "tap", "50", "50").Run() // tap go back to match list
+					if strings.Contains(string(bs), "\"usedWords\":") {
+						go markPlayedWord(bs)
+					}
 				}()
-			}
-			if !strings.Contains(string(bs), "You must enter a valid credentials") {
-				go markPlayedWord(bs)
 			}
 
 			resp.Body = ioutil.NopCloser(bytes.NewReader(bs))
 		} else if ctx.Req.URL.Path == "/api/1.0/lpendmatch_inturn.json" {
 			bs, _ := ioutil.ReadAll(resp.Body)
-			println(string(bs))
-			go func() {
-				time.Sleep(500 * time.Millisecond)
-				exec.Command("adb", "shell", "input", "tap", "500", "1200").Run() // tap REMOVE GAME
-			}()
+			if strings.Contains(string(bs), "\"usedWords\":") {
+				go func() {
+					time.Sleep(500 * time.Millisecond)
+					exec.Command("adb", "shell", "input", "tap", "500", "1200").Run() // tap REMOVE GAME
+				}()
+				go markPlayedWord(bs)
+			}
 			resp.Body = ioutil.NopCloser(bytes.NewReader(bs))
 		} else if ctx.Req.URL.Path == "/api/1.0/lpload_stats.json" {
 			bs, _ := ioutil.ReadAll(resp.Body)

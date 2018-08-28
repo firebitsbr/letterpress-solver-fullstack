@@ -20,6 +20,7 @@ export class MatchComponent implements OnInit {
 
   selectedTile: boolean[][];
   foundWords: string[][];
+
   choosingWord: string[];
 
   constructor(private http: Http) {
@@ -37,11 +38,14 @@ export class MatchComponent implements OnInit {
         (data) => {
           if (data) {
             this.processGameData(data);
-            // auto find words for played matches
+            // auto find words for matches that already started
             for (let i = 0; i < this.matches.length; i++) {
-              if (this.matches[i].matchStatus != 4) {   //matchStatus==4: new game
-                this.findWords(i);
+              if (this.matches[i].matchStatus === 4) {
+                this.selectedTile[i] = Array<boolean>(25);
+                continue; //matchStatus==4: new game, escape
               }
+
+              this.findWordsToFinish(i);
             }
           }
         });
@@ -101,24 +105,22 @@ export class MatchComponent implements OnInit {
     }
 
     this.selectedTile = Array<boolean[]>(this.matches.length);
-
-    // initialze seleted tiles
-    for (let i = 0; i < this.matches.length; i++) {
-      this.selectedTile[i] = Array<boolean>(25);
-      const tg = this.tileGrids[i];
-      for (let k = 0; k < 25; k++) {
-        // auto select unsurrounded opponent's tiles
-        this.selectedTile[i][k] = (tg[k].o == 0 && !tg[k].s);
-      }
-    }
-
-
     this.foundWords = Array<string[]>(this.matches.length);
     this.choosingWord = Array<string>(this.matches.length);
   }
 
+  findWordsToFinish(i: number) {
+    this.selectedTile[i] = Array<boolean>(25);
+    const tg = this.tileGrids[i];
+    for (let k = 0; k < 25; k++) {
+      // auto select untouched tiles (white)
+      this.selectedTile[i][k] = (tg[k].o === 127);
+    }
+    this.findWords(i, true)
+  }
 
-  findWords(i: number) {
+
+  findWords(i: number, isOnloading: boolean) {
     const letters = this.tileGrids[i].map(t => t.t).join('').toUpperCase();
     let selected = [];
     for (let k = 0; k < 25; k++) {
@@ -134,7 +136,7 @@ export class MatchComponent implements OnInit {
         this.foundWords[i] = data;
         const usedWords = this.matches[i].serverData.usedWords
         // filter out usedWords
-        this.foundWords[i] = this.foundWords[i].filter(w => !usedWords.some(uw => uw.indexOf(w.replace('*','')) === 0));
+        this.foundWords[i] = this.foundWords[i].filter(w => !usedWords.some(uw => uw.indexOf(w.replace('*', '')) === 0));
 
         //TODO: evalue word
         // basic score (-): covers all pink tiles = 0; miss -1
@@ -143,7 +145,18 @@ export class MatchComponent implements OnInit {
         // critical staus : hard / soft
         // more sophisticated: consider position, maybe need some machine learing
 
-        this.choosingWord[i] = this.foundWords[i][0];
+        this.choosingWord[i] = this.foundWords[i][isOnloading ? 0 : this.foundWords[i].length-1];
+
+        // If cannot find word to finish the game, select all pink
+        if (isOnloading && this.choosingWord[i] === undefined) {
+          this.selectedTile[i] = Array<boolean>(25);
+          const tg = this.tileGrids[i];
+          for (let k = 0; k < 25; k++) {
+            // auto select unsurrounded opponent's tiles (pink)
+            this.selectedTile[i][k] = (tg[k].o == 0 && !tg[k].s);
+          }
+          this.findWords(i, false);
+        }
       });
   }
 

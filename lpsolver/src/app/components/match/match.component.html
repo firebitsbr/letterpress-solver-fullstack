@@ -17,7 +17,7 @@
       <span class="select-bar"></span>
     </div>
     <button (click)="deleteWord(i)">x</button>
-    <button (click)="findWords(i)" class="btn"><span>Find! {{foundWords[i]?.length}}</span></button>
+    <button (click)="findWords(i, false)" class="btn"><span>Find! {{foundWords[i]?.length}}</span></button>
     <button *ngIf="choosingWord[i] !== undefined" (click)="autoClickTiles(i)" class="btn btn-purple"><span>Click</span></button>
     <button (click)="clearSelected(i)" class="btn btn-orange"><span>Clear</span></button>
     <div class="square-container">

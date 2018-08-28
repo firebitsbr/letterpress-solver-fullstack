@@ -221,7 +221,7 @@ function View_MatchComponent_1(_l) { return __WEBPACK_IMPORTED_MODULE_1__angular
         var pd_0 = (_co.deleteWord(_v.context.index) !== false);
         ad = (pd_0 && ad);
     } return ad; }, null, null)), (_l()(), __WEBPACK_IMPORTED_MODULE_1__angular_core__["_22" /* ɵted */](-1, null, ["x"])), (_l()(), __WEBPACK_IMPORTED_MODULE_1__angular_core__["_22" /* ɵted */](-1, null, ["\n    "])), (_l()(), __WEBPACK_IMPORTED_MODULE_1__angular_core__["_6" /* ɵeld */](27, 0, null, null, 2, "button", [["class", "btn"]], null, [[null, "click"]], function (_v, en, $event) { var ad = true; var _co = _v.component; if (("click" === en)) {
-        var pd_0 = (_co.findWords(_v.context.index) !== false);
+        var pd_0 = (_co.findWords(_v.context.index, false) !== false);
         ad = (pd_0 && ad);
     } return ad; }, null, null)), (_l()(), __WEBPACK_IMPORTED_MODULE_1__angular_core__["_6" /* ɵeld */](28, 0, null, null, 1, "span", [], null, null, null, null, null)), (_l()(), __WEBPACK_IMPORTED_MODULE_1__angular_core__["_22" /* ɵted */](29, null, ["Find! ", ""])), (_l()(), __WEBPACK_IMPORTED_MODULE_1__angular_core__["_22" /* ɵted */](-1, null, ["\n    "])), (_l()(), __WEBPACK_IMPORTED_MODULE_1__angular_core__["_1" /* ɵand */](16777216, null, null, 1, null, View_MatchComponent_3)), __WEBPACK_IMPORTED_MODULE_1__angular_core__["_5" /* ɵdid */](32, 16384, null, 0, __WEBPACK_IMPORTED_MODULE_3__angular_common__["d" /* NgIf */], [__WEBPACK_IMPORTED_MODULE_1__angular_core__["P" /* ViewContainerRef */], __WEBPACK_IMPORTED_MODULE_1__angular_core__["M" /* TemplateRef */]], { ngIf: [0, "ngIf"] }, null), (_l()(), __WEBPACK_IMPORTED_MODULE_1__angular_core__["_22" /* ɵted */](-1, null, ["\n    "])), (_l()(), __WEBPACK_IMPORTED_MODULE_1__angular_core__["_6" /* ɵeld */](34, 0, null, null, 2, "button", [["class", "btn btn-orange"]], null, [[null, "click"]], function (_v, en, $event) { var ad = true; var _co = _v.component; if (("click" === en)) {
         var pd_0 = (_co.clearSelected(_v.context.index) !== false);
@@ -264,11 +264,13 @@ var MatchComponent = /** @class */ (function () {
             .subscribe(function (data) {
             if (data) {
                 _this.processGameData(data);
-                // auto find words for played matches
+                // auto find words for matches that already started
                 for (var i = 0; i < _this.matches.length; i++) {
-                    if (_this.matches[i].matchStatus != 4) {
-                        _this.findWords(i);
+                    if (_this.matches[i].matchStatus === 4) {
+                        _this.selectedTile[i] = Array(25);
+                        continue; //matchStatus==4: new game, escape
                     }
+                    _this.findWordsToFinish(i);
                 }
             }
         });
@@ -328,19 +330,19 @@ var MatchComponent = /** @class */ (function () {
             _loop_1(i);
         }
         this.selectedTile = Array(this.matches.length);
-        // initialze seleted tiles
-        for (var i = 0; i < this.matches.length; i++) {
-            this.selectedTile[i] = Array(25);
-            var tg = this.tileGrids[i];
-            for (var k = 0; k < 25; k++) {
-                // auto select unsurrounded opponent's tiles
-                this.selectedTile[i][k] = (tg[k].o == 0 && !tg[k].s);
-            }
-        }
         this.foundWords = Array(this.matches.length);
         this.choosingWord = Array(this.matches.length);
     };
-    MatchComponent.prototype.findWords = function (i) {
+    MatchComponent.prototype.findWordsToFinish = function (i) {
+        this.selectedTile[i] = Array(25);
+        var tg = this.tileGrids[i];
+        for (var k = 0; k < 25; k++) {
+            // auto select untouched tiles (white)
+            this.selectedTile[i][k] = (tg[k].o === 127);
+        }
+        this.findWords(i, true);
+    };
+    MatchComponent.prototype.findWords = function (i, isOnloading) {
         var _this = this;
         var letters = this.tileGrids[i].map(function (t) { return t.t; }).join('').toUpperCase();
         var selected = [];
@@ -358,20 +360,23 @@ var MatchComponent = /** @class */ (function () {
             var usedWords = _this.matches[i].serverData.usedWords;
             // filter out usedWords
             _this.foundWords[i] = _this.foundWords[i].filter(function (w) { return !usedWords.some(function (uw) { return uw.indexOf(w.replace('*', '')) === 0; }); });
-            // mark played words
-            for (var index = 0; index < _this.foundWords[i].length - 1; index++) {
-                if (_this.foundWords[i][index] === _this.foundWords[i][index + 1]) {
-                    _this.foundWords[i][index] += '*';
-                    _this.foundWords[i][index + 1] += '*';
-                }
-            }
             //TODO: evalue word
             // basic score (-): covers all pink tiles = 0; miss -1
             // aggro score (+): covers white tile; add +1
             // waste score (+): covers blue or dark red tile; add +1
             // critical staus : hard / soft
             // more sophisticated: consider position, maybe need some machine learing
-            _this.choosingWord[i] = _this.foundWords[i][0];
+            _this.choosingWord[i] = _this.foundWords[i][isOnloading ? 0 : _this.foundWords[i].length - 1];
+            // If cannot find word to finish the game, select all pink
+            if (isOnloading && _this.choosingWord[i] === undefined) {
+                _this.selectedTile[i] = Array(25);
+                var tg = _this.tileGrids[i];
+                for (var k = 0; k < 25; k++) {
+                    // auto select unsurrounded opponent's tiles (pink)
+                    _this.selectedTile[i][k] = (tg[k].o == 0 && !tg[k].s);
+                }
+                _this.findWords(i, false);
+            }
         });
     };
     MatchComponent.prototype.clearSelected = function (i) {
