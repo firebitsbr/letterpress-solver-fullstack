@@ -81,8 +81,9 @@ func (s *spider) Init() {
 		} else if ctx.Req.URL.Path == "/api/1.0/lp_check_word.json" {
 			bs, _ := ioutil.ReadAll(resp.Body)
 			if strings.Contains(string(bs), "\"found\":false") {
-				println(string(bs))
-				go deleteWordDb(ctx.Req.URL.RawQuery)
+				inValidWord := strings.Split(ctx.Req.URL.RawQuery, "=")[2]
+				inValidWord = strings.ToLower(strings.Split(inValidWord, "&")[0])
+				go deleteWordDb(inValidWord)
 				exec.Command("adb", "shell", "input", "tap", "50", "50").Run() // tap clear
 				go func() {
 					time.Sleep(300 * time.Millisecond)

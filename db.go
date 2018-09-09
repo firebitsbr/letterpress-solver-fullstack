@@ -157,9 +157,7 @@ func prepareSelectWordsClause(minLetters string, maxLetters string) (sqlclause s
 	return
 }
 
-func deleteWordDb(urlRawQuery string) {
-	inValidWord := strings.Split(urlRawQuery, "=")[2]
-	inValidWord = strings.ToLower(strings.Split(inValidWord, "&")[0])
+func deleteWordDb(inValidWord string) {
 
 	sql := `UPDATE ` + table + ` SET valid = 0 WHERE word = (?) `
 	_, err := db.Exec(sql, strings.ToLower(inValidWord))
