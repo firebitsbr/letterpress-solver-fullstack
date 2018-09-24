@@ -145,7 +145,14 @@ export class MatchComponent implements OnInit {
         // critical staus : hard / soft
         // more sophisticated: consider position, maybe need some machine learing
 
-        this.choosingWord[i] = this.foundWords[i][isOnloading ? 0 : this.foundWords[i].length-1];
+        // <select> the default word <option>
+        let numBlankTiles = this.tileGrids[i].filter(t => t.o==127).length;
+        let offset = 0;
+        do {
+          this.choosingWord[i] = this.foundWords[i][(isOnloading || numBlankTiles <=5) ? offset : this.foundWords[i].length-1-offset];
+          offset++;
+          console.log(offset);
+        } while (this.choosingWord[i] && this.choosingWord[i].indexOf('*')>0 && offset < this.foundWords[i].length);
 
         // If cannot find word to finish the game, select all pink
         if (isOnloading && this.choosingWord[i] === undefined) {
@@ -212,4 +219,21 @@ export class MatchComponent implements OnInit {
     console.log('deleting...', this.choosingWord[i]);
   }
 
+  speakWordUS(word: string) {
+    word = word.replace(/\W/gi, '');
+    let s = new SpeechSynthesisUtterance(word);
+    speechSynthesis.speak(s);
+  }
+  speakWordUK(word: string) {
+    word = word.replace(/\W/gi, '');
+    let s = new SpeechSynthesisUtterance(word);
+    s.voice = speechSynthesis.getVoices().filter(v => v.lang.indexOf('en-GB') >= 0)[1]
+    speechSynthesis.speak(s);
+  }
+  speakWordFR(word: string) {
+    word = word.replace(/\W/gi, '');
+    let s = new SpeechSynthesisUtterance(word);
+    s.voice = speechSynthesis.getVoices().filter(v => v.lang.indexOf('fr-FR') >= 0)[1]
+    speechSynthesis.speak(s);
+  }
 }

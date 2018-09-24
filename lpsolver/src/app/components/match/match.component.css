@@ -200,3 +200,8 @@
 
 
   /******* highlight toggle checkbox ends *******/
+
+  #speak-word{
+    display: inline;
+    cursor: context-menu;
+  }
