@@ -114,10 +114,6 @@ func (s *spider) Init() {
 				go markPlayedWord(bs)
 			}
 			resp.Body = ioutil.NopCloser(bytes.NewReader(bs))
-		} else if ctx.Req.URL.Path == "/api/1.0/lpload_stats.json" {
-			bs, _ := ioutil.ReadAll(resp.Body)
-			println(string(bs))
-			resp.Body = ioutil.NopCloser(bytes.NewReader(bs))
 		} else if strings.Contains(ctx.Req.URL.Host, "ads") {
 			bs, _ := ioutil.ReadAll(resp.Body)
 			println(string(bs))
