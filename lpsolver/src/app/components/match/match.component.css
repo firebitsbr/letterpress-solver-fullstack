@@ -205,3 +205,19 @@
     display: inline;
     cursor: context-menu;
   }
+
+  .match-controls {
+    margin: 0 auto;
+  }
+
+  .match-header {
+    width: fit-content;
+    margin: 20px auto;
+  }
+
+  div.fetch-games {
+    position: sticky;
+    top: 0;
+    float: right;
+    padding-top: 50px;
+  }

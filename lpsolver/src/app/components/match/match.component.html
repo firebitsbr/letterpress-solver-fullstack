@@ -1,5 +1,5 @@
 <!-- <h3> Hi ! {{playerName}}</h3> -->
-<div>
+<div class="fetch-games">
 
   <!-- <input [(ngModel)]="playerName" type="text" name="playerName" id="playerName" class="playerName" placeholder="your username"> -->
   <!-- <br> -->
@@ -10,30 +10,34 @@
 
 <div>
   <div *ngFor="let match of matches; let i=index">
-    <h4>{{opponentNames[i]}}</h4>
-    <h2>{{choosingWord[i]?.toUpperCase()}}
-      <div id="speak-word" *ngIf="choosingWord[i] !== undefined">
-        <span (mouseenter)="speakWordUS(choosingWord[i])">🇺🇸</span>
-        <span (mouseenter)="speakWordUK(choosingWord[i])">🇬🇧</span>
-        <span (mouseenter)="speakWordFR(choosingWord[i])">🇫🇷</span>
+    <div class="match-header">
+      <h4>{{opponentNames[i]}}</h4>
+      <h2>{{choosingWord[i]?.toUpperCase()}}
+        <div id="speak-word" *ngIf="choosingWord[i] !== undefined">
+          <span (mouseenter)="speakWordUS(choosingWord[i])">🇺🇸</span>
+          <span (mouseenter)="speakWordUK(choosingWord[i])">🇬🇧</span>
+          <span (mouseenter)="speakWordFR(choosingWord[i])">🇫🇷</span>
+        </div>
+      </h2>
+      <div class="select">
+        <select [(ngModel)]="choosingWord[i]" class="select-text">
+          <option *ngFor="let word of foundWords[i]">{{word}}</option>
+        </select>
+        <span class="select-bar"></span>
       </div>
-    </h2>
-    <div class="select">
-      <select [(ngModel)]="choosingWord[i]" class="select-text">
-        <option *ngFor="let word of foundWords[i]">{{word}}</option>
-      </select>
-      <span class="select-bar"></span>
+      <button (click)="deleteWord(i)">x</button>
+      <div class="match-controls">
+        <button (click)="findWords(i, false)" class="btn">
+          <span>Find! {{foundWords[i]?.length}}</span>
+        </button>
+        <button *ngIf="choosingWord[i] !== undefined" (click)="autoClickTiles(i)" class="btn btn-purple">
+          <span>Click</span>
+        </button>
+        <button (click)="clearSelected(i)" class="btn btn-orange">
+          <span>Clear</span>
+        </button>
+      </div>
     </div>
-    <button (click)="deleteWord(i)">x</button>
-    <button (click)="findWords(i, false)" class="btn">
-      <span>Find! {{foundWords[i]?.length}}</span>
-    </button>
-    <button *ngIf="choosingWord[i] !== undefined" (click)="autoClickTiles(i)" class="btn btn-purple">
-      <span>Click</span>
-    </button>
-    <button (click)="clearSelected(i)" class="btn btn-orange">
-      <span>Clear</span>
-    </button>
     <div class="square-container">
       <div *ngFor="let tile of tileGrids[i]; let j=index">
         <div class="square owner-{{tileGrids[i][j]['o']}} surrounded-{{tileGrids[i][j]['s']}}">

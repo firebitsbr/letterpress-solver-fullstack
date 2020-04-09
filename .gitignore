@@ -5,6 +5,7 @@ tmp
 
 /build/
 /deploy/
+*/dist/
 /benchpress-build/
 gen_docs.disable
 test.disable
