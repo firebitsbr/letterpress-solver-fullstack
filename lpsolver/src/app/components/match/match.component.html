@@ -11,12 +11,17 @@
 <div>
   <div *ngFor="let match of matches; let i=index">
     <div class="match-header">
-      <h4>{{opponentNames[i]}}</h4>
+      <h4>
+        <img src="{{opponentAvatars[i]}}" alt="{{opponentNames[i]}}" width="50" style="position:relative;margin-left:-60px;top:20px;">
+        <span>{{opponentNames[i]}}</span>
+        <span style="font-family: Arial, Helvetica, sans-serif;margin-left: 1rem;">{{lastPlayedWords[i]}}</span>
+      </h4>
       <h2>{{choosingWord[i]?.toUpperCase()}}
         <div id="speak-word" *ngIf="choosingWord[i] !== undefined">
           <span (mouseenter)="speakWordUS(choosingWord[i])">🇺🇸</span>
           <span (mouseenter)="speakWordUK(choosingWord[i])">🇬🇧</span>
           <span (mouseenter)="speakWordFR(choosingWord[i])">🇫🇷</span>
+          <span (mouseenter)="speakWordNL(choosingWord[i])">🇳🇱</span>
         </div>
       </h2>
       <div class="select">

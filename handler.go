@@ -61,9 +61,6 @@ func clickTiles(clickList []int) {
 	}
 }
 
-func markPlayedWord(bs []byte) {
-	match := &MatchInfoSingle{}
-	json.Unmarshal(bs, match)
-	playedWords := match.Match.ServerData.UsedWords
+func markPlayedWord(playedWords []string) {
 	tagPlayedWordDb(playedWords[len(playedWords)-1])
 }

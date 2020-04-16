@@ -13,6 +13,7 @@ var (
 	matchInfo []byte
 )
 
+//Words ...
 type Words []struct {
 	Word string `json:"word"`
 }
@@ -77,13 +78,13 @@ type MatchInfo struct {
 	Matches []Match `json:"matches"`
 }
 
-//MatchInfo ...
+//MatchInfoSingle ...
 type MatchInfoSingle struct {
 	Success bool  `json:"success"`
 	Match   Match `json:"match"`
 }
 
-//Match...
+//Match ...
 type Match struct {
 	MatchID            string `json:"matchId"`
 	MatchIDNumber      int    `json:"matchIdNumber"`

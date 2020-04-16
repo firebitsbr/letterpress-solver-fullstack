@@ -82,7 +82,7 @@ func init() {
 func selectWordsDb(minLetters string, maxLetters string) []string {
 	sqlclause, args := prepareSelectWordsClause(minLetters, maxLetters)
 
-	sql := `SELECT word,valid FROM ` + table + ` WHERE valid IN (1,2) ` + sqlclause + `ORDER BY length ASC LIMIT 999`
+	sql := `SELECT word,valid FROM ` + table + ` WHERE valid IN (1,2) ` + sqlclause + `ORDER BY frequency DESC, length ASC LIMIT 999`
 	result, err := db.Query(sql, args...)
 	if err != nil {
 		panic(err.Error())
@@ -108,7 +108,7 @@ func selectWordsDb(minLetters string, maxLetters string) []string {
 func selectWordsCountDb(minLetters string, maxLetters string) (res int) {
 	sqlclause, args := prepareSelectWordsClause(minLetters, maxLetters)
 
-	sql := `SELECT COUNT(*) FROM ` + table + ` WHERE valid IN (1,2) ` + sqlclause
+	sql := `SELECT COUNT(*) FROM ` + table + ` WHERE valid > 0 ` + sqlclause
 
 	//unpack array as args
 	err := db.QueryRow(sql, args...).Scan(&res)

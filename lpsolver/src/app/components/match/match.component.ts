@@ -15,6 +15,8 @@ export class MatchComponent implements OnInit {
 
   matches: matchInfo.MatchInfo['matches'];
   opponentNames: matchInfo.Participant['userName'][];
+  opponentAvatars: matchInfo.Participant['avatarURL'][];
+  lastPlayedWords: string[];
   letterGrids: matchInfo.Match['letters'][];
   tileGrids: matchInfo.Tile[][];
 
@@ -68,9 +70,11 @@ export class MatchComponent implements OnInit {
     //   - b.participants[b.currentPlayerIndex==1?0:1].turnDate.valueOf());
     console.log(this.matches);
 
-    this.opponentNames = this.matches.map(m => this.playersId.includes(m.participants[0].userId) ? m.participants[1].userName : m.participants[0].userName);
-    console.log(this.opponentNames);
-    console.log(this.matches.map(m => m.matchId));
+    const opponents = this.matches.map(m => this.playersId.includes(m.participants[0].userId) ? m.participants[1] : m.participants[0]);
+    this.opponentNames = opponents.map(p => p.userName);
+    this.opponentAvatars = opponents.map(p => p.avatarURL ? p.avatarURL : 'https://thesocietypages.org/socimages/files/2009/05/nopic_192.gif');
+    this.lastPlayedWords = this.matches.map(m => m.serverData.usedWords).map(ws => ws.length > 0 ? ws[ws.length - 1] : '');
+
     this.letterGrids = this.matches.map(m => m['letters']);
     console.log(this.letterGrids);
     this.tileGrids = this.matches.map(m => m['serverData']['tiles'])
@@ -120,6 +124,7 @@ export class MatchComponent implements OnInit {
   }
 
 
+  //TODO: Remove the recursive call. The second param decides if the recursive call going on. 
   findWords(i: number, isOnloading: boolean) {
     const letters = this.tileGrids[i].map(t => t.t).join('').toUpperCase();
     let selected = [];
@@ -149,7 +154,7 @@ export class MatchComponent implements OnInit {
         let numBlankTiles = this.tileGrids[i].filter(t => t.o==127).length;
         let offset = 0;
         do {
-          this.choosingWord[i] = this.foundWords[i][(isOnloading || numBlankTiles <=5) ? offset : this.foundWords[i].length-1-offset];
+          this.choosingWord[i] = this.foundWords[i][offset];
           offset++;
           console.log(offset);
         } while (this.choosingWord[i] && this.choosingWord[i].indexOf('*')>0 && offset < this.foundWords[i].length);
@@ -175,7 +180,7 @@ export class MatchComponent implements OnInit {
     if (this.choosingWord[i] === undefined) return;
 
     const tg = this.tileGrids[i];
-    const letterMap = {};
+    const letterMap = {}; // key: letter; value: positions[]
 
     // construct the letterMap, each letter key will have ordered (pink,white...) tiles number as value
     // 1st, push selected tiles
@@ -234,6 +239,12 @@ export class MatchComponent implements OnInit {
     word = word.replace(/\W/gi, '');
     let s = new SpeechSynthesisUtterance(word);
     s.voice = speechSynthesis.getVoices().filter(v => v.lang.indexOf('fr-FR') >= 0)[1]
+    speechSynthesis.speak(s);
+  }
+  speakWordNL(word: string) {
+    word = word.replace(/\W/gi, '');
+    let s = new SpeechSynthesisUtterance(word);
+    s.voice = speechSynthesis.getVoices().filter(v => v.lang.indexOf('nl-NL') >= 0)[0]
     speechSynthesis.speak(s);
   }
 }
