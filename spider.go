@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os/exec"
+	"regexp"
 	"strings"
 	"time"
 
@@ -130,6 +131,35 @@ func (s *spider) Init() {
 				}
 				resp.Body = ioutil.NopCloser(bytes.NewReader(bs))
 			}
+		} else if strings.Contains(ctx.Req.URL.Host, "duolingo.com") {
+			bs, _ := ioutil.ReadAll(resp.Body)
+			s := string(bs)
+			l := len(s)
+			println(s[0:(map[bool]int{true: 200, false: l})[l > 200]])
+			ioutil.WriteFile("./.vscode/"+strings.Replace(ctx.Req.URL.Path, "/", "_", -1)+".json", bs, 0744)
+
+			if ctx.Req.URL.Path == "/2017-06-30/sessions" {
+				duolingoSession, err := UnmarshalDuolingoSession(bs)
+				if err != nil {
+					log.Println(err)
+				}
+
+				// Print challenges details
+				go func() {
+					time.Sleep(2 * time.Second)
+					for index, ds := range duolingoSession.Challenges {
+						fmt.Printf("%v\t%v\n", index, ds.NewWords)
+						println(ds.Prompt)
+						fmt.Printf("%v\n", ds.CorrectSolutions)
+						fmt.Printf("%v\n", ds.CorrectTokens)
+						println(&ds.SolutionTranslation)
+					}
+				}()
+
+				// Trim last 4 choices (misleading)
+				bs = trimDuolingoChoices(s)
+			}
+			resp.Body = ioutil.NopCloser(bytes.NewReader(bs))
 		}
 
 		return resp
@@ -224,4 +254,28 @@ func orPanic(err error) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+// Trim duolingo challenge choices by 4
+func trimDuolingoChoices(s string) []byte {
+	var reps []string
+	re := regexp.MustCompile(`"choices":\[\{([^\]]+)\]`)
+	matches := re.FindAllString(s, -1)
+	for _, ms := range matches {
+		ts := strings.Split(ms, ",")
+		if len(ts) <= 4 {
+			continue
+		}
+		reps = append(reps, ms)
+		trimNum := 4
+		if strings.Contains(ms, "https") {
+			trimNum = 8
+		}
+		rs := strings.Join(ts[:len(ts)-trimNum], ",") + "]"
+		reps = append(reps, rs)
+		println()
+	}
+	replacer := strings.NewReplacer(reps...)
+	news := replacer.Replace(s)
+	return []byte(news)
 }
