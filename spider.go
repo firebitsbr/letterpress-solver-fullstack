@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/url"
 	"os/exec"
-	"regexp"
 	"strings"
 	"time"
 
@@ -64,6 +63,11 @@ func (s *spider) Init() {
 			resp.Header = make(http.Header)
 			resp.StatusCode = 200
 			resp.Body = ioutil.NopCloser(bytes.NewReader([]byte("")))
+		} else if ctx.Req.URL.Host+ctx.Req.URL.Path == "ios-api-2.duolingo.com:443/2017-06-30/users/406560412/remove-heart" {
+			resp = new(http.Response)
+			resp.Header = make(http.Header)
+			resp.StatusCode = 200
+			resp.Body = ioutil.NopCloser(bytes.NewReader([]byte("{}")))
 		}
 		return
 	}
@@ -131,7 +135,7 @@ func (s *spider) Init() {
 				}
 				resp.Body = ioutil.NopCloser(bytes.NewReader(bs))
 			}
-		} else if strings.Contains(ctx.Req.URL.Host, "duolingo.com") {
+		} else if strings.Contains(ctx.Req.URL.Host, "ios-api-2.duolingo.com") {
 			bs, _ := ioutil.ReadAll(resp.Body)
 			s := string(bs)
 			l := len(s)
@@ -148,17 +152,30 @@ func (s *spider) Init() {
 				go func() {
 					time.Sleep(2 * time.Second)
 					for index, ds := range duolingoSession.Challenges {
-						fmt.Printf("%v\t%v\n", index, ds.NewWords)
+						fmt.Printf("\n%v\t\t%v\n", index, ds.NewWords)
 						println(ds.Prompt)
-						fmt.Printf("%v\n", ds.CorrectSolutions)
+						if ds.Metadata.CorrectIndices != nil {
+							fmt.Printf("%v\n", ds.Metadata.Sentences[ds.Metadata.CorrectIndices[0]].Sentence)
+						}
+						if ds.CorrectIndex != nil {
+							fmt.Printf("%v\n", ds.Choices[*ds.CorrectIndex])
+						}
 						fmt.Printf("%v\n", ds.CorrectTokens)
-						println(&ds.SolutionTranslation)
+						if ds.SolutionTranslation != nil {
+							fmt.Printf("%v\n", *ds.SolutionTranslation)
+						}
 					}
 				}()
 
 				// Trim last 4 choices (misleading)
-				bs = trimDuolingoChoices(s)
+				s = trimDuolingoChoices(s)
+				// Mark correct single choice
+				s = markDuolingoSingleChoice(s, duolingoSession.Challenges)
 			}
+			resp.Body = ioutil.NopCloser(bytes.NewReader([]byte(s)))
+		} else if ctx.Req.URL.Host == "mesu.apple.com:443" {
+			bs, _ := ioutil.ReadAll(resp.Body)
+			println(string(bs))
 			resp.Body = ioutil.NopCloser(bytes.NewReader(bs))
 		}
 
@@ -254,28 +271,4 @@ func orPanic(err error) {
 	if err != nil {
 		panic(err)
 	}
-}
-
-// Trim duolingo challenge choices by 4
-func trimDuolingoChoices(s string) []byte {
-	var reps []string
-	re := regexp.MustCompile(`"choices":\[\{([^\]]+)\]`)
-	matches := re.FindAllString(s, -1)
-	for _, ms := range matches {
-		ts := strings.Split(ms, ",")
-		if len(ts) <= 4 {
-			continue
-		}
-		reps = append(reps, ms)
-		trimNum := 4
-		if strings.Contains(ms, "https") {
-			trimNum = 8
-		}
-		rs := strings.Join(ts[:len(ts)-trimNum], ",") + "]"
-		reps = append(reps, rs)
-		println()
-	}
-	replacer := strings.NewReplacer(reps...)
-	news := replacer.Replace(s)
-	return []byte(news)
 }
