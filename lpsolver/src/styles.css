@@ -80,11 +80,19 @@
     background-color: #c0392b;
   }
 
-  .btn-purple {
+  .btn-purple, .btn-purple:focus {
     background-color: #d199eb;
   }
   
-  .btn-purple:hover, .btn-purple:focus {
+  .btn-purple:hover {
     background-color: #ae17e9;
+  }
+
+  .btn-pink, .btn-pink:focus {
+    background-color: #e4afbc;
+  }
+  
+  .btn-pink:hover {
+    background-color: #ee89b8;
   }
   /******* material button ends *******/

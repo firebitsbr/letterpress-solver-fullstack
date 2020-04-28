@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sort"
 	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -119,6 +120,27 @@ func selectWordsCountDb(minLetters string, maxLetters string) (res int) {
 	return
 }
 
+func selectWordsFreqeuncyDb(minLetters string, maxLetters string) (res []int) {
+	res = make([]int, 26)
+	arr := make([]interface{}, 26)
+	sqlclause, args := prepareSelectWordsClause(minLetters, maxLetters)
+
+	sql := `SELECT `
+	for i, l := range "ABCDEFGHIJKLMNOPQRSTUVWXYZ" {
+		sql += `SUM(` + string(l) + `),`
+		arr[i] = &res[i]
+	}
+	sql = sql[:len(sql)-1]
+	sql += ` FROM ` + table + ` WHERE valid > 0 ` + sqlclause
+
+	err := db.QueryRow(sql, args...).Scan(arr...)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	return
+}
+
 func prepareSelectWordsClause(minLetters string, maxLetters string) (sqlclause string, args []interface{}) {
 	loBound := make(map[rune]int)
 	hiBound := make(map[rune]int)
@@ -175,5 +197,38 @@ func tagPlayedWordDb(word string) {
 		panic(err.Error())
 	} else {
 		log.Println("played :", word)
+	}
+}
+
+func allLetterFrequencyDb() {
+	as := "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	m := make(map[rune]int)
+	for _, l := range as {
+		sql := `SELECT SUM(` + string(l) + `) FROM ` + table + ` WHERE valid = 1 `
+		i := 0
+		err := db.QueryRow(sql).Scan(&i)
+		if err != nil {
+			panic(err.Error())
+		}
+		m[l] = i
+		fmt.Printf("%q\t%v\n", l, i)
+	}
+
+	type kv struct {
+		Key   rune
+		Value int
+	}
+
+	var ss []kv
+	for k, v := range m {
+		ss = append(ss, kv{k, v})
+	}
+
+	sort.Slice(ss, func(i, j int) bool {
+		return ss[i].Value < ss[j].Value
+	})
+
+	for _, kv := range ss {
+		fmt.Printf("%q", kv.Key)
 	}
 }

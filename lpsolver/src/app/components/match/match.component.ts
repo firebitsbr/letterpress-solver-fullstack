@@ -31,23 +31,47 @@ export class MatchComponent implements OnInit {
 
   ngOnInit() {
     this.fetchGames();
+    window.onscroll = () => {
+      if (window.scrollY == 0) {
+        this.fetchGames();
+      }
+    };
   }
 
   fetchGames() {
     this.http.get('http://' + window.location.host + '/match')
-      .map((resp) => resp.text() !== '' ? resp.json() : '')
+      .map((resp) => resp.text().length > 1000 ? resp.json() : '')
       .subscribe(
         (data) => {
           if (data) {
             this.processGameData(data);
             // auto find words for matches that already started
             for (let i = 0; i < this.matches.length; i++) {
+              this.selectedTile[i] = Array<boolean>(25);
               if (this.matches[i].matchStatus === 4) {
-                this.selectedTile[i] = Array<boolean>(25);
+                const letters = this.tileGrids[i].map(t => t.t).join('').toUpperCase();
+                this.http.get('http://' + window.location.host + '/letterFrequency?letters=' + letters)
+                .map((resp) => resp.json())
+                .subscribe((data :number[]) => {
+                  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+                  const freq = {};
+                  data.forEach((d,i) => { if (d > 0) freq[alphabet.charAt(i)] = d; });
+                  const maxFreq = Math.max.apply(null, data);
+                  const minFreq = Math.min.apply(null, data.filter(d => d>0));
+                  console.log('letter freq(A-Z)', freq);
+                  console.log('max frequency', maxFreq);
+                  console.log('min frequency', minFreq);
+                  const tg = this.tileGrids[i];
+                  for (let k = 0; k < 25; k++) {
+                    tg[k].colorCode = `hsl(103, 90%, ${(Math.log1p(freq[tg[k].t]) / Math.log1p(maxFreq)) ** 1 * 100}%`;
+                  } 
+                })
                 continue; //matchStatus==4: new game, escape
               }
-
-              this.findWordsToFinish(i);
+              this.selectAllWhite(i);
+              this.findWords(i).then(isFound => {
+                if (!isFound) this.selectAllPink(i);
+              })
             }
           }
         });
@@ -60,6 +84,9 @@ export class MatchComponent implements OnInit {
     } else if (data.match) {
       // fetch newly created game
       this.matches = [data.match];
+    } else {
+      console.log('Cannot fetch match data from MITM server...');
+      return;
     }
 
     // only show matches on my turn
@@ -113,19 +140,8 @@ export class MatchComponent implements OnInit {
     this.choosingWord = Array<string>(this.matches.length);
   }
 
-  findWordsToFinish(i: number) {
-    this.selectedTile[i] = Array<boolean>(25);
-    const tg = this.tileGrids[i];
-    for (let k = 0; k < 25; k++) {
-      // auto select untouched tiles (white)
-      this.selectedTile[i][k] = (tg[k].o === 127);
-    }
-    this.findWords(i, true)
-  }
-
-
   //TODO: Remove the recursive call. The second param decides if the recursive call going on. 
-  findWords(i: number, isOnloading: boolean) {
+  findWords(i: number): Promise<boolean> {
     const letters = this.tileGrids[i].map(t => t.t).join('').toUpperCase();
     let selected = [];
     for (let k = 0; k < 25; k++) {
@@ -135,45 +151,75 @@ export class MatchComponent implements OnInit {
     }
     console.log(letters);
     console.log(selected.join(''));
-    this.http.get('http://' + window.location.host + '/words?selected=' + selected.join('') + '&letters=' + letters)
+    return new Promise(resolve => {
+     this.http.get('http://' + window.location.host + '/words?selected=' + selected.join('') + '&letters=' + letters)
       .map(resp => resp.json())
       .subscribe(data => {
         this.foundWords[i] = data;
-        const usedWords = this.matches[i].serverData.usedWords
+        const usedWords = this.matches[i].serverData.usedWords;
         // filter out usedWords
         this.foundWords[i] = this.foundWords[i].filter(w => !usedWords.some(uw => uw.indexOf(w.replace('*', '')) === 0));
-
+        if (this.foundWords[i].length == 0) {
+          const tg = this.tileGrids[i];
+          // Test whether all selected tiles are blank
+          const existSelectedNonBlank = this.selectedTile[i].map((b, k) => tg[k].o!==127 && b).some(b => b);
+          if (!existSelectedNonBlank) {
+            resolve(false);
+            return;
+          }
+          // Recursively unselect letters
+          const order = 'JQXZWKVFYBHGMPUDCLTONRAISE';
+          let kToUnselect = -1;
+          for (let q = 0; q < order.length; q++) {
+            const l = order[q];
+            for (let k = 0; k < 25; k++) {
+              if(this.selectedTile[i][k] && tg[k].t === l && tg[k].o !== 127){
+                kToUnselect = k;
+                break;
+              }
+            }
+            if (kToUnselect >=0) break;
+          }
+          this.selectedTile[i][kToUnselect] = false;
+          this.findWords(i);
+        }
         //TODO: evalue word
         // basic score (-): covers all pink tiles = 0; miss -1
         // aggro score (+): covers white tile; add +1
         // waste score (+): covers blue or dark red tile; add +1
         // critical staus : hard / soft
         // more sophisticated: consider position, maybe need some machine learing
-
         // <select> the default word <option>
-        let numBlankTiles = this.tileGrids[i].filter(t => t.o==127).length;
         let offset = 0;
         do {
           this.choosingWord[i] = this.foundWords[i][offset];
           offset++;
-          console.log(offset);
-        } while (this.choosingWord[i] && this.choosingWord[i].indexOf('*')>0 && offset < this.foundWords[i].length);
+        } while (this.choosingWord[i] && this.choosingWord[i].indexOf('*') > 0 && offset < this.foundWords[i].length);
 
-        // If cannot find word to finish the game, select all pink
-        if (isOnloading && this.choosingWord[i] === undefined) {
-          this.selectedTile[i] = Array<boolean>(25);
-          const tg = this.tileGrids[i];
-          for (let k = 0; k < 25; k++) {
-            // auto select unsurrounded opponent's tiles (pink)
-            this.selectedTile[i][k] = (tg[k].o == 0 && !tg[k].s);
-          }
-          this.findWords(i, false);
-        }
+        resolve(true);
       });
+    });
   }
 
   clearSelected(i: number) {
     this.selectedTile[i].fill(false)
+  }
+
+  // select all untouched tiles (white)
+  selectAllWhite(i: number) {
+    const tg = this.tileGrids[i];
+    for (let k = 0; k < 25; k++) {
+      this.selectedTile[i][k] = (tg[k].o === 127);
+    }
+  }
+
+  // select all unsurrounded opponent's tiles (pink)
+  selectAllPink(i: number) {
+    const tg = this.tileGrids[i];
+    for (let k = 0; k < 25; k++) {
+      this.selectedTile[i][k] = (tg[k].o == 0 && !tg[k].s);
+    } 
+    this.findWords(i);
   }
 
   autoClickTiles(i: number) {

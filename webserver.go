@@ -27,6 +27,7 @@ func RunWeb(port string) {
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(matchInfo)
 	}).Methods("GET")
+	r.HandleFunc("/letterFrequency", letterFrequency).Methods("GET")
 	r.HandleFunc("/words", findWords).Methods("GET")
 	r.HandleFunc("/word", clickWord).Methods("POST")
 	r.HandleFunc("/word", deleteWord).Methods("DELETE")
@@ -70,6 +71,16 @@ func clickWord(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Printf("clicking: %s %v\n", word[0], clickList)
 	clickTiles(clickList)
+}
+
+func letterFrequency(w http.ResponseWriter, r *http.Request) {
+	// minLetters, _ := r.URL.Query()["selected"]
+	maxLetters, _ := r.URL.Query()["letters"]
+
+	res := selectWordsFreqeuncyDb("", maxLetters[0])
+	ws, _ := json.Marshal(res)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(ws)
 }
 
 //MatchInfo ...

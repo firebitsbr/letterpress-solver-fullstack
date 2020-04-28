@@ -8,7 +8,7 @@
   </button>
 </div>
 
-<div>
+<div style="min-height: 1000px;">
   <div *ngFor="let match of matches; let i=index">
     <div class="match-header">
       <h4>
@@ -38,14 +38,15 @@
         <button *ngIf="choosingWord[i] !== undefined" (click)="autoClickTiles(i)" class="btn btn-purple">
           <span>Click</span>
         </button>
-        <button (click)="clearSelected(i)" class="btn btn-orange">
+        <button (click)="clearSelected(i)" (dblclick)="selectAllPink(i)" class="btn btn-orange">
           <span>Clear</span>
         </button>
       </div>
     </div>
     <div class="square-container">
       <div *ngFor="let tile of tileGrids[i]; let j=index">
-        <div class="square owner-{{tileGrids[i][j]['o']}} surrounded-{{tileGrids[i][j]['s']}}">
+        <div class="square owner-{{tileGrids[i][j]['o']}} surrounded-{{tileGrids[i][j]['s']}}"
+            [ngStyle]="matches[i].matchStatus===4 && {'background-color': tileGrids[i][j]['colorCode'] }">
           <div class="content">
             <div class="toggle">
               <input type="checkbox" [(ngModel)]="selectedTile[i][j]" name="check-{{i}}-20" value="{{tileGrids[i][j]['t']}}">

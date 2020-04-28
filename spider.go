@@ -58,17 +58,18 @@ func (s *spider) Init() {
 			resp.Header.Add("Content-Type", "application/octet-stream")
 			resp.Body = ioutil.NopCloser(bytes.NewReader(goproxy.CA_CERT))
 
-		} else if strings.Contains(ctx.Req.URL.Host, "ads") {
+		} else if hasSubString(ctx.Req.URL.Host, "ads", "mopub", "facebook", "presage") {
 			resp = new(http.Response)
 			resp.Header = make(http.Header)
 			resp.StatusCode = 200
 			resp.Body = ioutil.NopCloser(bytes.NewReader([]byte("")))
-		} else if ctx.Req.URL.Host+ctx.Req.URL.Path == "ios-api-2.duolingo.com:443/2017-06-30/users/406560412/remove-heart" {
-			resp = new(http.Response)
-			resp.Header = make(http.Header)
-			resp.StatusCode = 200
-			resp.Body = ioutil.NopCloser(bytes.NewReader([]byte("{}")))
 		}
+		// else if ctx.Req.URL.Host+ctx.Req.URL.Path == "ios-api-2.duolingo.com:443/2017-06-30/users/406560412/remove-heart" {
+		// 	resp = new(http.Response)
+		// 	resp.Header = make(http.Header)
+		// 	resp.StatusCode = 200
+		// 	resp.Body = ioutil.NopCloser(bytes.NewReader([]byte("{}")))
+		// }
 		return
 	}
 	responseHandleFunc := func(resp *http.Response, ctx *goproxy.ProxyCtx) *http.Response {
@@ -128,7 +129,7 @@ func (s *spider) Init() {
 
 				if len(match.Match.ServerData.UsedWords) > 0 {
 					go func() {
-						time.Sleep(500 * time.Millisecond)
+						time.Sleep(1200 * time.Millisecond)
 						exec.Command("adb", "shell", "input", "tap", "500", "1200").Run() // tap REMOVE GAME
 					}()
 					go markPlayedWord(match.Match.ServerData.UsedWords)
@@ -148,17 +149,16 @@ func (s *spider) Init() {
 					log.Println(err)
 				}
 
+				println(duolingoSession.Metadata.Explanation)
+
 				// Print challenges details
 				go func() {
 					time.Sleep(2 * time.Second)
 					for index, ds := range duolingoSession.Challenges {
-						fmt.Printf("\n%v\t\t%v\n", index, ds.NewWords)
+						fmt.Printf("\n%v\t\t%v\n", index, ds.ChallengeGeneratorIdentifier.SpecificType)
 						println(ds.Prompt)
 						if ds.Metadata.CorrectIndices != nil {
 							fmt.Printf("%v\n", ds.Metadata.Sentences[ds.Metadata.CorrectIndices[0]].Sentence)
-						}
-						if ds.CorrectIndex != nil {
-							fmt.Printf("%v\n", ds.Choices[*ds.CorrectIndex])
 						}
 						fmt.Printf("%v\n", ds.CorrectTokens)
 						if ds.SolutionTranslation != nil {
@@ -271,4 +271,13 @@ func orPanic(err error) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func hasSubString(input string, words ...string) bool {
+	for _, word := range words {
+		if strings.Index(input, word) > -1 {
+			return true
+		}
+	}
+	return false
 }

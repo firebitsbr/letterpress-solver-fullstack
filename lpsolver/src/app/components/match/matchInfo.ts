@@ -5,6 +5,7 @@ declare namespace MatchInfo {
         o: number; // 1:Self; 0:Opponent; 127:Blank
         s: boolean; // true: surrounded
         color: string;
+        colorCode: string;
     }
 
     export interface ServerData {
