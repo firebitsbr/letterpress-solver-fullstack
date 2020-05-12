@@ -17,6 +17,7 @@ export class MatchComponent implements OnInit {
   opponentNames: matchInfo.Participant['userName'][];
   opponentAvatars: matchInfo.Participant['avatarURL'][];
   lastPlayedWords: string[];
+  usedWords: string[][];
   letterGrids: matchInfo.Match['letters'][];
   tileGrids: matchInfo.Tile[][];
 
@@ -34,6 +35,9 @@ export class MatchComponent implements OnInit {
     window.onscroll = () => {
       if (window.scrollY == 0) {
         this.fetchGames();
+        setTimeout(() => {
+          if (window.scrollY == 0) window.scroll(0,99999);
+        }, 800);
       }
     };
   }
@@ -100,7 +104,8 @@ export class MatchComponent implements OnInit {
     const opponents = this.matches.map(m => this.playersId.includes(m.participants[0].userId) ? m.participants[1] : m.participants[0]);
     this.opponentNames = opponents.map(p => p.userName);
     this.opponentAvatars = opponents.map(p => p.avatarURL ? p.avatarURL : 'https://thesocietypages.org/socimages/files/2009/05/nopic_192.gif');
-    this.lastPlayedWords = this.matches.map(m => m.serverData.usedWords).map(ws => ws.length > 0 ? ws[ws.length - 1] : '');
+    this.usedWords = this.matches.map(m => m.serverData.usedWords);
+    this.lastPlayedWords = this.usedWords.map(ws => ws.length > 0 ? ws[ws.length - 1] : '');
 
     this.letterGrids = this.matches.map(m => m['letters']);
     console.log(this.letterGrids);
@@ -143,6 +148,19 @@ export class MatchComponent implements OnInit {
   //TODO: Remove the recursive call. The second param decides if the recursive call going on. 
   findWords(i: number): Promise<boolean> {
     const letters = this.tileGrids[i].map(t => t.t).join('').toUpperCase();
+    const tg = this.tileGrids[i]; 
+    // Handicap to weak opponent
+    let numSelected = this.selectedTile[i].filter(t => t).length;
+    const numRed = tg.filter(t => t.color === 'red').length;
+    const numPink = tg.filter(t => t.color === 'pink').length;
+    const numBlue = tg.filter(t => t.color === 'blue').length
+    const numAzure = tg.filter(t => t.color === 'azure').length;
+    const handicap = (1+numBlue-numRed)/2
+    while (numSelected > 0 && numSelected > numPink-handicap && numRed+numPink <= numBlue+numAzure/2+numSelected) {
+      if(!this.unselectLetter(i, tg)) break;
+      numSelected = this.selectedTile[i].filter(t => t).length;
+    }
+
     let selected = [];
     for (let k = 0; k < 25; k++) {
       if (this.selectedTile[i][k]) {
@@ -156,11 +174,11 @@ export class MatchComponent implements OnInit {
       .map(resp => resp.json())
       .subscribe(data => {
         this.foundWords[i] = data;
-        const usedWords = this.matches[i].serverData.usedWords;
+        const usedWords = this.usedWords[i];
         // filter out usedWords
         this.foundWords[i] = this.foundWords[i].filter(w => !usedWords.some(uw => uw.indexOf(w.replace('*', '')) === 0));
+        
         if (this.foundWords[i].length == 0) {
-          const tg = this.tileGrids[i];
           // Test whether all selected tiles are blank
           const existSelectedNonBlank = this.selectedTile[i].map((b, k) => tg[k].o!==127 && b).some(b => b);
           if (!existSelectedNonBlank) {
@@ -168,37 +186,41 @@ export class MatchComponent implements OnInit {
             return;
           }
           // Recursively unselect letters
-          const order = 'JQXZWKVFYBHGMPUDCLTONRAISE';
-          let kToUnselect = -1;
-          for (let q = 0; q < order.length; q++) {
-            const l = order[q];
-            for (let k = 0; k < 25; k++) {
-              if(this.selectedTile[i][k] && tg[k].t === l && tg[k].o !== 127){
-                kToUnselect = k;
-                break;
-              }
-            }
-            if (kToUnselect >=0) break;
-          }
-          this.selectedTile[i][kToUnselect] = false;
+          this.unselectLetter(i, tg)
           this.findWords(i);
         }
-        //TODO: evalue word
-        // basic score (-): covers all pink tiles = 0; miss -1
-        // aggro score (+): covers white tile; add +1
-        // waste score (+): covers blue or dark red tile; add +1
-        // critical staus : hard / soft
-        // more sophisticated: consider position, maybe need some machine learing
-        // <select> the default word <option>
-        let offset = 0;
-        do {
-          this.choosingWord[i] = this.foundWords[i][offset];
-          offset++;
-        } while (this.choosingWord[i] && this.choosingWord[i].indexOf('*') > 0 && offset < this.foundWords[i].length);
 
+        // Move cursor to the next virgin word (never played)
+        const virginIndex = this.foundWords[i].findIndex(w => w.indexOf('*')===-1)
+        this.choosingWord[i] = this.foundWords[i][Math.max(0, virginIndex)];
+        
         resolve(true);
       });
     });
+  }
+
+  unselectLetter(i: number, tg: matchInfo.Tile[]): boolean {
+    if (this.selectedTile[i].filter(t => t).length === 0) return false;
+
+    const positionOrder = [[12], [11, 13, 7, 17], [6, 8, 16, 18], [2, 10, 14, 22], [1, 3, 5, 9, 15, 19, 21, 23], [0, 4, 20, 24]];
+    const frequencyOrder = 'JQXZWKVFYBHGMPUDCLTONRAISE';
+    let kToUnselect = -1;
+    for (let ps of positionOrder) {
+      for (let q = 0; q < frequencyOrder.length; q++) {
+        const l = frequencyOrder[q];
+        for (let k of ps) {
+          if(this.selectedTile[i][k] && tg[k].t === l && tg[k].o !== 127){
+            kToUnselect = k;
+            break;
+          }
+        }
+        if (kToUnselect >=0) break;
+      }
+      if (kToUnselect >=0) break;
+    }
+    if (kToUnselect < 0) return false;
+    this.selectedTile[i][kToUnselect] = false;
+    return true;
   }
 
   clearSelected(i: number) {
@@ -266,13 +288,21 @@ export class MatchComponent implements OnInit {
 
   deleteWord(i: number) {
     this.http.delete('http://' + window.location.host + '/word?delete=' + this.choosingWord[i])
-      .subscribe()
+    .subscribe()
     console.log('deleting...', this.choosingWord[i]);
   }
+  
+  // addWords(lastPlayedWords) {
+  //   setTimeout(() => {      
+  //     this.http.put('http://' + window.location.host + '/words', lastPlayedWords)
+  //     .subscribe()
+  //   }, 3000);
+  // }
 
   speakWordUS(word: string) {
     word = word.replace(/\W/gi, '');
     let s = new SpeechSynthesisUtterance(word);
+    s.voice = speechSynthesis.getVoices().filter(v => v.lang.indexOf('en-US') >= 0)[19]
     speechSynthesis.speak(s);
   }
   speakWordUK(word: string) {
@@ -290,7 +320,13 @@ export class MatchComponent implements OnInit {
   speakWordNL(word: string) {
     word = word.replace(/\W/gi, '');
     let s = new SpeechSynthesisUtterance(word);
-    s.voice = speechSynthesis.getVoices().filter(v => v.lang.indexOf('nl-NL') >= 0)[0]
+    s.voice = speechSynthesis.getVoices().filter(v => v.lang.indexOf('nl-NL') >= 0)[1]
+    speechSynthesis.speak(s);
+  }
+  speakWordDE(word: string) {
+    word = word.replace(/\W/gi, '');
+    let s = new SpeechSynthesisUtterance(word);
+    s.voice = speechSynthesis.getVoices().filter(v => v.lang.indexOf('de-DE') >= 0)[1]
     speechSynthesis.speak(s);
   }
 }

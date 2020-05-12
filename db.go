@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"sort"
 	"strings"
 
@@ -14,6 +15,7 @@ import (
 
 var (
 	db    *sql.DB
+	conf  Conf
 	table = "en_words" //db_english_all_words en_words
 )
 
@@ -26,6 +28,9 @@ type Conf struct {
 		Port   string   `json:"port"`
 		Scheme []string `json:"scheme"`
 	} `json:"database"`
+	Letterpress struct {
+		UserIDs []string `json:"UserIDs"`
+	} `json:"Letterpress"`
 }
 
 type Word struct {
@@ -65,7 +70,6 @@ func init() {
 	file, _ := os.Open("conf.json")
 	defer file.Close()
 	decoder := json.NewDecoder(file)
-	conf := Conf{}
 	err := decoder.Decode(&conf)
 	if err != nil {
 		panic(err.Error())
@@ -197,6 +201,54 @@ func tagPlayedWordDb(word string) {
 		panic(err.Error())
 	} else {
 		log.Println("played :", word)
+	}
+}
+
+func addWordsDB(words []string) {
+	sql := `INSERT IGNORE INTO ` + table + `(word,length,A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z,frequency) 
+	VALUES ((?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),123456)`
+
+	words = append(words, "centerplate")
+	for _, word := range words {
+		result, err := db.Exec(sql, word,
+			len(word),
+			strings.Count(word, "a"),
+			strings.Count(word, "b"),
+			strings.Count(word, "c"),
+			strings.Count(word, "d"),
+			strings.Count(word, "e"),
+			strings.Count(word, "f"),
+			strings.Count(word, "g"),
+			strings.Count(word, "h"),
+			strings.Count(word, "i"),
+			strings.Count(word, "j"),
+			strings.Count(word, "k"),
+			strings.Count(word, "l"),
+			strings.Count(word, "m"),
+			strings.Count(word, "n"),
+			strings.Count(word, "o"),
+			strings.Count(word, "p"),
+			strings.Count(word, "q"),
+			strings.Count(word, "r"),
+			strings.Count(word, "s"),
+			strings.Count(word, "t"),
+			strings.Count(word, "u"),
+			strings.Count(word, "v"),
+			strings.Count(word, "w"),
+			strings.Count(word, "x"),
+			strings.Count(word, "y"),
+			strings.Count(word, "z"),
+		)
+		if err != nil {
+			panic(err.Error())
+		} else {
+			lastInsertID, _ := result.LastInsertId()
+			rowsAffected, _ := result.RowsAffected()
+			if rowsAffected > 0 {
+				exec.Command("say", "new word; ;"+word).Run()
+				log.Printf("add word: %s; %v; %v", word, lastInsertID, rowsAffected)
+			}
+		}
 	}
 }
 

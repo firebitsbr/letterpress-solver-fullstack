@@ -79,13 +79,18 @@ func (s *spider) Init() {
 		log.Println(ctx.Req.URL.Host + ctx.Req.URL.Path)
 
 		if ctx.Req.URL.Host == "solebonapi.com:443" {
-			if ctx.Req.URL.Path == "/api/1.0/lplist_matches.json" || ctx.Req.URL.Path == "/api/1.0/lpcreate_match.json" || ctx.Req.URL.Path == "/api/1.0/lpmatch_detail.json" {
+			if ctx.Req.URL.Path == "/api/1.0/lplist_matches.json" || ctx.Req.URL.Path == "/api/1.0/lpcreate_match.json" || ctx.Req.URL.Path == "/api/1.0/lpmatch_detail.json" || ctx.Req.URL.Path == "/api/1.0/lp_sawgameend.json" {
 				//send letterpress match data to webserver
 				bs, _ := ioutil.ReadAll(resp.Body)
 				// println(string(bs))
 				go setMatch(bs)
 				if ctx.Req.URL.Path == "/api/1.0/lpcreate_match.json" {
 					go checkVowalsMatch(bs)
+				}
+				if ctx.Req.URL.Path == "/api/1.0/lplist_matches.json" {
+					go addLastPlayedWords(bs)
+				} else {
+					go addLastPlayedWord(bs)
 				}
 				resp.Body = ioutil.NopCloser(bytes.NewReader(bs))
 			} else if ctx.Req.URL.Path == "/api/1.0/lp_check_word.json" {
@@ -149,11 +154,9 @@ func (s *spider) Init() {
 					log.Println(err)
 				}
 
-				println(duolingoSession.Metadata.Explanation)
-
 				// Print challenges details
 				go func() {
-					time.Sleep(2 * time.Second)
+					time.Sleep(3 * time.Second)
 					for index, ds := range duolingoSession.Challenges {
 						fmt.Printf("\n%v\t\t%v\n", index, ds.ChallengeGeneratorIdentifier.SpecificType)
 						println(ds.Prompt)
@@ -165,6 +168,7 @@ func (s *spider) Init() {
 							fmt.Printf("%v\n", *ds.SolutionTranslation)
 						}
 					}
+					println(duolingoSession.Metadata.Explanation)
 				}()
 
 				// Trim last 4 choices (misleading)

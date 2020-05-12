@@ -29,6 +29,7 @@ func RunWeb(port string) {
 	}).Methods("GET")
 	r.HandleFunc("/letterFrequency", letterFrequency).Methods("GET")
 	r.HandleFunc("/words", findWords).Methods("GET")
+	r.HandleFunc("/words", addWords).Methods("PUT")
 	r.HandleFunc("/word", clickWord).Methods("POST")
 	r.HandleFunc("/word", deleteWord).Methods("DELETE")
 
@@ -43,7 +44,6 @@ func RunWeb(port string) {
 }
 
 func findWords(w http.ResponseWriter, r *http.Request) {
-
 	minLetters, _ := r.URL.Query()["selected"]
 	maxLetters, _ := r.URL.Query()["letters"]
 
@@ -52,6 +52,16 @@ func findWords(w http.ResponseWriter, r *http.Request) {
 	log.Println("Found words: ", len(res))
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(ws)
+}
+
+func addWords(w http.ResponseWriter, r *http.Request) {
+	var words []string
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&words)
+	if err != nil {
+		panic(err)
+	}
+	addWordsDB(words)
 }
 
 func deleteWord(w http.ResponseWriter, r *http.Request) {

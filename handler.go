@@ -55,7 +55,7 @@ func clickTiles(clickList []int) {
 			// }
 		}(x, y, k, i) //pass loop local vars to goroutine!
 		time.Sleep(timeInterval)
-		if i < 8 {
+		if i < 6 {
 			timeInterval += 15 * time.Millisecond
 		}
 	}
@@ -63,4 +63,39 @@ func clickTiles(clickList []int) {
 
 func markPlayedWord(playedWords []string) {
 	tagPlayedWordDb(playedWords[len(playedWords)-1])
+}
+
+func addLastPlayedWords(bs []byte) {
+	matches := &MatchInfo{}
+	json.Unmarshal(bs, matches)
+	lastPlayedWords := make([]string, 0)
+	for _, match := range matches.Matches {
+		uw := match.ServerData.UsedWords
+		status := match.MatchStatus
+		currentID := match.Participants[match.CurrentPlayerIndex].UserID
+		if len(uw) > 0 && (status != 1 || contains(conf.Letterpress.UserIDs, currentID)) {
+			lastPlayedWords = append(lastPlayedWords, uw[len(uw)-1])
+		}
+	}
+	addWordsDB(lastPlayedWords)
+}
+func addLastPlayedWord(bs []byte) {
+	match := &MatchInfoSingle{}
+	json.Unmarshal(bs, match)
+	lastPlayedWords := make([]string, 0)
+	uw := match.Match.ServerData.UsedWords
+	if len(uw) > 0 {
+		lastPlayedWords = append(lastPlayedWords, uw[len(uw)-1])
+	}
+
+	addWordsDB(lastPlayedWords)
+}
+
+func contains(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
 }
