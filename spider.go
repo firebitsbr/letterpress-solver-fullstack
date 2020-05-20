@@ -144,9 +144,9 @@ func (s *spider) Init() {
 		} else if strings.Contains(ctx.Req.URL.Host, "ios-api-2.duolingo.com") {
 			bs, _ := ioutil.ReadAll(resp.Body)
 			s := string(bs)
-			l := len(s)
-			println(s[0:(map[bool]int{true: 200, false: l})[l > 200]])
-			ioutil.WriteFile("./.vscode/"+strings.Replace(ctx.Req.URL.Path, "/", "_", -1)+".json", bs, 0744)
+			// l := len(s)
+			// println(s[0:(map[bool]int{true: 200, false: l})[l > 200]])
+			// ioutil.WriteFile("./.vscode/"+strings.Replace(ctx.Req.URL.Path, "/", "_", -1)+".json", bs, 0744)
 
 			if ctx.Req.URL.Path == "/2017-06-30/sessions" {
 				duolingoSession, err := UnmarshalDuolingoSession(bs)

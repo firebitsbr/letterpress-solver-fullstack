@@ -87,7 +87,7 @@ func init() {
 func selectWordsDb(minLetters string, maxLetters string) []string {
 	sqlclause, args := prepareSelectWordsClause(minLetters, maxLetters)
 
-	sql := `SELECT word,valid FROM ` + table + ` WHERE valid IN (1,2) ` + sqlclause + `ORDER BY frequency DESC, length ASC LIMIT 999`
+	sql := `SELECT word,valid FROM ` + table + ` WHERE valid IN (1,2) ` + sqlclause + `ORDER BY frequency DESC, length ASC LIMIT 1999`
 	result, err := db.Query(sql, args...)
 	if err != nil {
 		panic(err.Error())
@@ -204,11 +204,38 @@ func tagPlayedWordDb(word string) {
 	}
 }
 
+func removeByValue(l []string, item string) []string {
+	for i, other := range l {
+		if other == item {
+			return append(l[:i], l[i+1:]...)
+		}
+	}
+	return l
+}
+
 func addWordsDB(words []string) {
-	sql := `INSERT IGNORE INTO ` + table + `(word,length,A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z,frequency) 
+	if len(words) == 0 {
+		return
+	}
+
+	// Filter out existing words in db
+	sql := `SELECT word FROM ` + table + ` WHERE word in ('` + strings.Join(words, "','") + `')`
+	result, err := db.Query(sql)
+	if err != nil {
+		panic(err.Error())
+	}
+	for result.Next() {
+		var word Word
+		err := result.Scan(&word.Word)
+		words = removeByValue(words, word.Word)
+		if err != nil {
+			panic(err.Error())
+		}
+	}
+
+	sql = `INSERT IGNORE INTO ` + table + `(word,length,A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z,frequency) 
 	VALUES ((?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),123456)`
 
-	words = append(words, "centerplate")
 	for _, word := range words {
 		result, err := db.Exec(sql, word,
 			len(word),

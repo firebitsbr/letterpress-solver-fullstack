@@ -39,7 +39,7 @@ func clickTiles(clickList []int) {
 	width := 216
 	left := 108
 	top := 803
-	timeInterval := 220 * time.Millisecond
+	timeInterval := 230 * time.Millisecond
 
 	for i, k := range clickList {
 		x := left + width*(k%5)

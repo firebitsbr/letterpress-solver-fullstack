@@ -53,23 +53,8 @@ export class MatchComponent implements OnInit {
             for (let i = 0; i < this.matches.length; i++) {
               this.selectedTile[i] = Array<boolean>(25);
               if (this.matches[i].matchStatus === 4) {
-                const letters = this.tileGrids[i].map(t => t.t).join('').toUpperCase();
-                this.http.get('http://' + window.location.host + '/letterFrequency?letters=' + letters)
-                .map((resp) => resp.json())
-                .subscribe((data :number[]) => {
-                  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-                  const freq = {};
-                  data.forEach((d,i) => { if (d > 0) freq[alphabet.charAt(i)] = d; });
-                  const maxFreq = Math.max.apply(null, data);
-                  const minFreq = Math.min.apply(null, data.filter(d => d>0));
-                  console.log('letter freq(A-Z)', freq);
-                  console.log('max frequency', maxFreq);
-                  console.log('min frequency', minFreq);
-                  const tg = this.tileGrids[i];
-                  for (let k = 0; k < 25; k++) {
-                    tg[k].colorCode = `hsl(103, 90%, ${(Math.log1p(freq[tg[k].t]) / Math.log1p(maxFreq)) ** 1 * 100}%`;
-                  } 
-                })
+                // For fresh new match, build heatmap
+                this.buildHeatmap(i);
                 continue; //matchStatus==4: new game, escape
               }
               this.selectAllWhite(i);
@@ -113,7 +98,7 @@ export class MatchComponent implements OnInit {
       .map(t => t.slice(20, 25).concat(t.slice(15, 20).concat(t.slice(10, 15).concat(t.slice(5, 10).concat(t.slice(0, 5))))));
     this.tileGrids.forEach(tg => tg.forEach(t => t.t = t.t.toUpperCase()));
 
-
+    // build tileGrids
     for (let i = 0; i < this.tileGrids.length; i++) {
       const tg = this.tileGrids[i];
       // reverse owner, if player moves first
@@ -155,32 +140,31 @@ export class MatchComponent implements OnInit {
     const numPink = tg.filter(t => t.color === 'pink').length;
     const numBlue = tg.filter(t => t.color === 'blue').length
     const numAzure = tg.filter(t => t.color === 'azure').length;
-    const handicap = (1+numBlue-numRed)/2
-    while (numSelected > 0 && numSelected > numPink-handicap && numRed+numPink <= numBlue+numAzure/2+numSelected) {
+    while (numSelected > 1 && (numSelected+numAzure+numBlue/3) / (numPink+numRed) > 2 && (numBlue > numRed || numRed===0)) {
       if(!this.unselectLetter(i, tg)) break;
       numSelected = this.selectedTile[i].filter(t => t).length;
     }
 
+    // Build selected letters
     let selected = [];
     for (let k = 0; k < 25; k++) {
       if (this.selectedTile[i][k]) {
         selected.push(letters[k])
       }
     }
-    console.log(letters);
-    console.log(selected.join(''));
+    console.log(letters, selected.join(''));
     return new Promise(resolve => {
      this.http.get('http://' + window.location.host + '/words?selected=' + selected.join('') + '&letters=' + letters)
       .map(resp => resp.json())
       .subscribe(data => {
         this.foundWords[i] = data;
         const usedWords = this.usedWords[i];
-        // filter out usedWords
+        // filter out usedWords nor words as begining of usedWords
         this.foundWords[i] = this.foundWords[i].filter(w => !usedWords.some(uw => uw.indexOf(w.replace('*', '')) === 0));
         
+        const existSelectedNonBlank = this.selectedTile[i].map((b, k) => tg[k].o!==127 && b).some(b => b);
         if (this.foundWords[i].length == 0) {
           // Test whether all selected tiles are blank
-          const existSelectedNonBlank = this.selectedTile[i].map((b, k) => tg[k].o!==127 && b).some(b => b);
           if (!existSelectedNonBlank) {
             resolve(false);
             return;
@@ -188,15 +172,43 @@ export class MatchComponent implements OnInit {
           // Recursively unselect letters
           this.unselectLetter(i, tg)
           this.findWords(i);
+        } else {
+          // Try to move cursor to the next virgin word (never played)
+          const virginIndex = this.foundWords[i].findIndex(w => w.charAt(w.length-1) !== '*')
+          if (virginIndex < 0) {
+            this.unselectLetter(i, tg);
+            if (existSelectedNonBlank && numBlue > numRed) {
+              this.findWords(i);
+            }
+          }
+          this.choosingWord[i] = this.foundWords[i][Math.max(0, virginIndex)];
         }
-
-        // Move cursor to the next virgin word (never played)
-        const virginIndex = this.foundWords[i].findIndex(w => w.indexOf('*')===-1)
-        this.choosingWord[i] = this.foundWords[i][Math.max(0, virginIndex)];
         
         resolve(true);
       });
     });
+  }
+
+  // Set colorCode for each tile based on all available words hits rarity
+  buildHeatmap(i: number) {
+    const letters = this.tileGrids[i].map(t => t.t).join('').toUpperCase();
+    this.http.get('http://' + window.location.host + '/letterFrequency?letters=' + letters)
+    .map((resp) => resp.json())
+    .subscribe((data :number[]) => {
+      const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+      const freq = {};
+      // Data::int[26] A-Z
+      data.forEach((d,i) => { if (d > 0) freq[alphabet.charAt(i)] = d; });
+      const maxFreq = Math.max.apply(null, data);
+      const minFreq = Math.min.apply(null, data.filter(d => d>0));
+      console.log('letter freq(A-Z)', freq);
+      console.log('max frequency', maxFreq);
+      console.log('min frequency', minFreq);
+      const tg = this.tileGrids[i];
+      for (let k = 0; k < 25; k++) {
+        tg[k].colorCode = `hsl(103, 90%, ${(Math.log1p(freq[tg[k].t]) / Math.log1p(maxFreq)) ** 1 * 100}%`;
+      }
+    })
   }
 
   unselectLetter(i: number, tg: matchInfo.Tile[]): boolean {
@@ -261,8 +273,9 @@ export class MatchComponent implements OnInit {
       }
     }
     // 2nd, push unselected tiles, pink first, then white
+    const positionOrder = [0, 4, 20, 24, 1, 3, 5, 9, 15, 19, 21, 23, 2, 10, 14, 22, 6, 8, 16, 18, 11, 13, 7, 17, 12];
     ["pink", "white", "red", "azure", "blue"].forEach(color => {
-      for (let k = 0; k < 25; k++) {
+      for (let k of positionOrder) {
         if (tg[k].color === color && !this.selectedTile[i][k]) {
           if (!letterMap[tg[k].t]) {
             letterMap[tg[k].t] = []
