@@ -124,12 +124,14 @@ func selectWordsCountDb(minLetters string, maxLetters string) (res int) {
 	return
 }
 
+//Head - total number of word;
+//Tail - letters[26] usages
 func selectWordsFreqeuncyDb(minLetters string, maxLetters string) (res []int) {
-	res = make([]int, 26)
-	arr := make([]interface{}, 26)
+	res = make([]int, 27)
+	arr := make([]interface{}, 27)
 	sqlclause, args := prepareSelectWordsClause(minLetters, maxLetters)
 
-	sql := `SELECT `
+	sql := `SELECT COUNT(*) `
 	for i, l := range "ABCDEFGHIJKLMNOPQRSTUVWXYZ" {
 		sql += `SUM(` + string(l) + `),`
 		arr[i] = &res[i]

@@ -82,16 +82,16 @@ func (s *spider) Init() {
 			if ctx.Req.URL.Path == "/api/1.0/lplist_matches.json" || ctx.Req.URL.Path == "/api/1.0/lpcreate_match.json" || ctx.Req.URL.Path == "/api/1.0/lpmatch_detail.json" || ctx.Req.URL.Path == "/api/1.0/lp_sawgameend.json" {
 				//send letterpress match data to webserver
 				bs, _ := ioutil.ReadAll(resp.Body)
-				// println(string(bs))
-				go setMatch(bs)
-				if ctx.Req.URL.Path == "/api/1.0/lpcreate_match.json" {
-					go checkVowalsMatch(bs)
+				if ctx.Req.URL.Path != "/api/1.0/lp_sawgameend.json" {
+					go setMatch(bs)
 				}
+
 				if ctx.Req.URL.Path == "/api/1.0/lplist_matches.json" {
 					go addLastPlayedWords(bs)
 				} else {
 					go addLastPlayedWord(bs)
 				}
+
 				resp.Body = ioutil.NopCloser(bytes.NewReader(bs))
 			} else if ctx.Req.URL.Path == "/api/1.0/lp_check_word.json" {
 				bs, _ := ioutil.ReadAll(resp.Body)
@@ -127,7 +127,6 @@ func (s *spider) Init() {
 			} else if ctx.Req.URL.Path == "/api/1.0/lpendmatch_inturn.json" {
 				// Match finished
 				bs, _ := ioutil.ReadAll(resp.Body)
-				println(string(bs))
 
 				match := &MatchInfoSingle{}
 				json.Unmarshal(bs, match)

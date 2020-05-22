@@ -197,10 +197,12 @@ export class MatchComponent implements OnInit {
     .subscribe((data :number[]) => {
       const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
       const freq = {};
-      // Data::int[26] A-Z
+      // Data::int[27] wC,A,...,Z
+      const wordCount = data.shift();
       data.forEach((d,i) => { if (d > 0) freq[alphabet.charAt(i)] = d; });
       const maxFreq = Math.max.apply(null, data);
       const minFreq = Math.min.apply(null, data.filter(d => d>0));
+      console.log('word count', wordCount);
       console.log('letter freq(A-Z)', freq);
       console.log('max frequency', maxFreq);
       console.log('min frequency', minFreq);
@@ -208,6 +210,7 @@ export class MatchComponent implements OnInit {
       for (let k = 0; k < 25; k++) {
         tg[k].colorCode = `hsl(103, 90%, ${(Math.log1p(freq[tg[k].t]) / Math.log1p(maxFreq)) ** 1 * 100}%`;
       }
+      speechSynthesis.speak(new SpeechSynthesisUtterance(Math.round(wordCount/1000)+'K;'));
     })
   }
 
