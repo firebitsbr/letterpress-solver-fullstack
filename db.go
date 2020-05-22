@@ -129,14 +129,15 @@ func selectWordsCountDb(minLetters string, maxLetters string) (res int) {
 func selectWordsFreqeuncyDb(minLetters string, maxLetters string) (res []int) {
 	res = make([]int, 27)
 	arr := make([]interface{}, 27)
-	sqlclause, args := prepareSelectWordsClause(minLetters, maxLetters)
+	arr[0] = &res[0]
 
-	sql := `SELECT COUNT(*) `
+	sql := `SELECT COUNT(*), `
 	for i, l := range "ABCDEFGHIJKLMNOPQRSTUVWXYZ" {
 		sql += `SUM(` + string(l) + `),`
-		arr[i] = &res[i]
+		arr[i+1] = &res[i+1]
 	}
-	sql = sql[:len(sql)-1]
+	sql = sql[:len(sql)-1] // remove trailing comma
+	sqlclause, args := prepareSelectWordsClause(minLetters, maxLetters)
 	sql += ` FROM ` + table + ` WHERE valid > 0 ` + sqlclause
 
 	err := db.QueryRow(sql, args...).Scan(arr...)
