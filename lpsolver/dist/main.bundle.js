@@ -455,7 +455,7 @@ var MatchComponent = /** @class */ (function () {
             var freqList = Object.keys(freq)
                 .map(function (k) { return [k, freq[k]]; })
                 .sort(function (a, b) { return a[1] - b[1]; })
-                .reduce(function (a, c) { a[c[0]] = a[c[1]]; return a; }, {});
+                .reduce(function (a, c) { a[c[0]] = c[1]; return a; }, {});
             console.log('letter freq(A-Z)', freqList);
             console.log('word count', wordCount);
             console.log('max frequency', maxFreq);

@@ -205,7 +205,7 @@ export class MatchComponent implements OnInit {
       const freqList = Object.keys(freq)
         .map(k => [k, freq[k]])
         .sort((a,b) => a[1]-b[1])
-        .reduce((a,c) => { a[c[0]] = a[c[1]]; return a}, {});
+        .reduce((a,c) => { a[c[0]] = c[1]; return a}, {});
       console.log('letter freq(A-Z)', freqList);
       console.log('word count', wordCount);
       console.log('max frequency', maxFreq);
