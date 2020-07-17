@@ -452,7 +452,10 @@ var MatchComponent = /** @class */ (function () {
                 freq[alphabet.charAt(i)] = d; });
             var maxFreq = Math.max.apply(null, data);
             var minFreq = Math.min.apply(null, data.filter(function (d) { return d > 0; }));
-            var freqList = Object.keys(freq).map(function (k) { return [k, freq[k]]; }).sort(function (a, b) { return a[1] - b[1]; });
+            var freqList = Object.keys(freq)
+                .map(function (k) { return [k, freq[k]]; })
+                .sort(function (a, b) { return a[1] - b[1]; })
+                .reduce(function (a, c) { a[c[0]] = a[c[1]]; return a; }, {});
             console.log('letter freq(A-Z)', freqList);
             console.log('word count', wordCount);
             console.log('max frequency', maxFreq);

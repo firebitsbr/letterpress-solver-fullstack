@@ -202,7 +202,10 @@ export class MatchComponent implements OnInit {
       data.forEach((d,i) => { if (d > 0) freq[alphabet.charAt(i)] = d; });
       const maxFreq = Math.max.apply(null, data);
       const minFreq = Math.min.apply(null, data.filter(d => d>0));
-      const freqList = Object.keys(freq).map(k => [k, freq[k]]).sort((a,b) => a[1]-b[1]);
+      const freqList = Object.keys(freq)
+        .map(k => [k, freq[k]])
+        .sort((a,b) => a[1]-b[1])
+        .reduce((a,c) => { a[c[0]] = a[c[1]]; return a}, {});
       console.log('letter freq(A-Z)', freqList);
       console.log('word count', wordCount);
       console.log('max frequency', maxFreq);
