@@ -452,8 +452,9 @@ var MatchComponent = /** @class */ (function () {
                 freq[alphabet.charAt(i)] = d; });
             var maxFreq = Math.max.apply(null, data);
             var minFreq = Math.min.apply(null, data.filter(function (d) { return d > 0; }));
+            var freqList = Object.keys(freq).map(function (k) { return [k, freq[k]]; }).sort(function (a, b) { return a[1] - b[1]; });
+            console.log('letter freq(A-Z)', freqList);
             console.log('word count', wordCount);
-            console.log('letter freq(A-Z)', freq);
             console.log('max frequency', maxFreq);
             console.log('min frequency', minFreq);
             var tg = _this.tileGrids[i];
@@ -467,7 +468,7 @@ var MatchComponent = /** @class */ (function () {
         if (this.selectedTile[i].filter(function (t) { return t; }).length === 0)
             return false;
         var positionOrder = [[12], [11, 13, 7, 17], [6, 8, 16, 18], [2, 10, 14, 22], [1, 3, 5, 9, 15, 19, 21, 23], [0, 4, 20, 24]];
-        var frequencyOrder = 'JQXZWKVFYBHGMPUDCLTONRAISE';
+        var frequencyOrder = 'ESIARNOTLCDUPMGHBYFVKWZXQJ';
         var kToUnselect = -1;
         for (var _i = 0, positionOrder_1 = positionOrder; _i < positionOrder_1.length; _i++) {
             var ps = positionOrder_1[_i];

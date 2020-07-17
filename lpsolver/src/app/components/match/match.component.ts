@@ -202,8 +202,9 @@ export class MatchComponent implements OnInit {
       data.forEach((d,i) => { if (d > 0) freq[alphabet.charAt(i)] = d; });
       const maxFreq = Math.max.apply(null, data);
       const minFreq = Math.min.apply(null, data.filter(d => d>0));
+      const freqList = Object.keys(freq).map(k => [k, freq[k]]).sort((a,b) => a[1]-b[1]);
+      console.log('letter freq(A-Z)', freqList);
       console.log('word count', wordCount);
-      console.log('letter freq(A-Z)', freq);
       console.log('max frequency', maxFreq);
       console.log('min frequency', minFreq);
       const tg = this.tileGrids[i];
@@ -218,7 +219,7 @@ export class MatchComponent implements OnInit {
     if (this.selectedTile[i].filter(t => t).length === 0) return false;
 
     const positionOrder = [[12], [11, 13, 7, 17], [6, 8, 16, 18], [2, 10, 14, 22], [1, 3, 5, 9, 15, 19, 21, 23], [0, 4, 20, 24]];
-    const frequencyOrder = 'JQXZWKVFYBHGMPUDCLTONRAISE';
+    const frequencyOrder = 'ESIARNOTLCDUPMGHBYFVKWZXQJ';
     let kToUnselect = -1;
     for (let ps of positionOrder) {
       for (let q = 0; q < frequencyOrder.length; q++) {
